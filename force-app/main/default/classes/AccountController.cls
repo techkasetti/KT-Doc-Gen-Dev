@@ -5,7 +5,7 @@ public with sharing class AccountController {
        System.debug('accList'+accList);
         return accList;
    }
- @AuraEnabled(cacheable=true)
+ @AuraEnabled(cacheable=true)    //jj
    public static List<Account> getAccountsWithContacts() {
        List<Account> accounts = [SELECT Id, Name, Industry,
                                   (SELECT Id, Name FROM Contacts)
