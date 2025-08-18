@@ -3,7 +3,7 @@ public with sharing class AccountController {
    public  static List<Account> accountController() {
        List<Account> accList=[SELECT Id,Name FROM Account ];
        System.debug('accList'+accList);
-        return accList;   //added pavan
+        return accList;   //added pavan 01
    }
  @AuraEnabled(cacheable=true)
    public static List<Account> getAccountsWithContacts() {
