@@ -1,0 +1,111 @@
+.document-content {
+    min-height: 400px;
+    background-color: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+}
+
+.document-preview {
+    min-height: 300px;
+}
+
+.document-text {
+    padding: 1rem;
+    line-height: 1.6;
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+}
+
+.document-text h2 {
+    color: #0176d3;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #0176d3;
+    padding-bottom: 0.5rem;
+}
+
+.document-text h3 {
+    color: #444;
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.document-text p {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.document-text ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.document-text li {
+    margin-bottom: 0.5rem;
+}
+
+.ai-analysis-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+}
+
+.analysis-section {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+}
+
+.analysis-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.metric-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #dee2e6;
+    transition: transform 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.metric-value {
+    color: #0176d3;
+    font-weight: bold;
+}
+
+.insight-item {
+    padding: 0.5rem;
+    border-left: 3px solid #0176d3;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.recommendation-item {
+    background: linear-gradient(135deg, #fff3cd 0%, #fef9e7 100%);
+    border-left: 4px solid #856404;
+}
+
+.signature-request-item:last-child {
+    border-bottom: none !important;
+}
+
+.empty-state {
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .document-text {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .metric-card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .ai-analysis-panel {
+        margin-top: 1rem;
+    }
+}

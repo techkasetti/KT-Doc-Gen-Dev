@@ -1,0 +1,189 @@
+<template>
+    <lightning-card title="Document Generator" icon-name="standard:document">
+        <div class="slds-p-horizontal_medium">
+            <!-- Progress Indicator -->
+            <lightning-progress-indicator 
+                current-step={currentStep} 
+                type="base" 
+                variant="base">
+                <lightning-progress-step 
+                    label="Document Type" 
+                    value="step1">
+                </lightning-progress-step>
+                <lightning-progress-step 
+                    label="Configuration" 
+                    value="step2">
+                </lightning-progress-step>
+                <lightning-progress-step 
+                    label="Generate" 
+                    value="step3">
+                </lightning-progress-step>
+                <lightning-progress-step 
+                    label="Review" 
+                    value="step4">
+                </lightning-progress-step>
+            </lightning-progress-indicator>
+
+            <!-- Step 1: Document Type Selection -->
+            <div if:true={isStep1} class="slds-m-top_medium">
+                <lightning-combobox
+                    name="region"
+                    label="Select Region"
+                    value={selectedRegion}
+                    placeholder="Choose Region"
+                    options={regionOptions}
+                    onchange={handleRegionChange}
+                    required>
+                </lightning-combobox>
+
+                <lightning-combobox
+                    name="role"
+                    label="Select Role"
+                    value={selectedRole}
+                    placeholder="Choose Role"
+                    options={roleOptions}
+                    onchange={handleRoleChange}
+                    class="slds-m-top_small"
+                    required>
+                </lightning-combobox>
+
+                <lightning-combobox
+                    name="contractType"
+                    label="Contract Type"
+                    value={selectedContractType}
+                    placeholder="Choose Contract Type"
+                    options={contractTypeOptions}
+                    onchange={handleContractTypeChange}
+                    class="slds-m-top_small"
+                    required>
+                </lightning-combobox>
+            </div>
+
+            <!-- Step 2: Configuration -->
+            <div if:true={isStep2} class="slds-m-top_medium">
+                <lightning-textarea
+                    name="additionalClauses"
+                    label="Additional Clauses (Optional)"
+                    value={additionalClauses}
+                    placeholder="Enter any additional clauses or requirements"
+                    max-length="1000"
+                    onchange={handleAdditionalClausesChange}>
+                </lightning-textarea>
+
+                <lightning-combobox
+                    name="outputFormat"
+                    label="Output Format"
+                    value={selectedOutputFormat}
+                    placeholder="Choose Output Format"
+                    options={outputFormatOptions}
+                    onchange={handleOutputFormatChange}
+                    class="slds-m-top_small"
+                    required>
+                </lightning-combobox>
+
+                <lightning-input
+                    type="checkbox"
+                    label="Include E-Signature Request"
+                    checked={includeSignature}
+                    onchange={handleSignatureToggle}
+                    class="slds-m-top_small">
+                </lightning-input>
+
+                <div if:true={includeSignature} class="slds-m-top_small">
+                    <lightning-input
+                        type="email"
+                        label="Signer Email"
+                        value={signerEmail}
+                        placeholder="Enter signer email"
+                        onchange={handleSignerEmailChange}
+                        required>
+                    </lightning-input>
+                </div>
+            </div>
+
+            <!-- Step 3: Generate Document -->
+            <div if:true={isStep3} class="slds-m-top_medium">
+                <div class="slds-text-align_center">
+                    <lightning-spinner if:true={isGenerating} alternative-text="Generating document...">
+                    </lightning-spinner>
+                    
+                    <div if:false={isGenerating}>
+                        <lightning-button
+                            variant="brand"
+                            label="Generate Document"
+                            onclick={handleGenerateDocument}
+                            class="slds-m-bottom_medium">
+                        </lightning-button>
+                    </div>
+
+                    <div if:true={generatedClause} class="slds-box slds-theme_default slds-m-top_medium">
+                        <h3 class="slds-text-heading_small slds-m-bottom_small">Generated Document Preview:</h3>
+                        <div class="generated-content">
+                            {generatedClause}
+                        </div>
+                        
+                        <div if:true={complianceStatus} class="slds-m-top_small">
+                            <lightning-badge 
+                                label={complianceStatusLabel}
+                                variant={complianceVariant}>
+                            </lightning-badge>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Review and Actions -->
+            <div if:true={isStep4} class="slds-m-top_medium">
+                <div class="slds-text-align_center">
+                    <lightning-button-group>
+                        <lightning-button
+                            variant="success"
+                            label="Download Document"
+                            onclick={handleDownload}
+                            disabled={!documentGenerated}>
+                        </lightning-button>
+                        
+                        <lightning-button
+                            variant="brand"
+                            label="Send for Signature"
+                            onclick={handleSendForSignature}
+                            disabled={!includeSignature}>
+                        </lightning-button>
+                        
+                        <lightning-button
+                            variant="neutral"
+                            label="Generate New"
+                            onclick={handleReset}>
+                        </lightning-button>
+                    </lightning-button-group>
+                </div>
+
+                <div if:true={signatureRequestId} class="slds-m-top_medium">
+                    <lightning-formatted-text 
+                        value="Signature request sent successfully! Request ID: {0}"
+                        link-text={signatureRequestId}>
+                    </lightning-formatted-text>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="slds-m-top_large slds-text-align_center">
+                <lightning-button-group>
+                    <lightning-button
+                        variant="neutral"
+                        label="Previous"
+                        onclick={handlePrevious}
+                        disabled={isFirstStep}>
+                    </lightning-button>
+                    
+                    <lightning-button
+                        variant="brand"
+                        label="Next"
+                        onclick={handleNext}
+                        disabled={isLastStep}>
+                    </lightning-button>
+                </lightning-button-group>
+            </div>
+        </div>
+    </lightning-card>
+</template>

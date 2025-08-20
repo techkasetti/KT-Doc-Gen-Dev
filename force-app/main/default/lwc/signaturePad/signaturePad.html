@@ -1,0 +1,160 @@
+<template>
+    <lightning-card title="Digital Signature" icon-name="standard:signature">
+        <div class="slds-p-horizontal_medium">
+            
+            <!-- Signature Methods -->
+            <lightning-radio-group 
+                name="signatureMethod" 
+                label="Choose Signature Method" 
+                options={signatureMethodOptions} 
+                value={selectedMethod} 
+                onchange={handleMethodChange}
+                type="radio"
+                class="slds-m-bottom_medium">
+            </lightning-radio-group>
+
+            <!-- Draw Signature -->
+            <div if:true={isDrawMethod} class="signature-section">
+                <div class="signature-canvas-container">
+                    <canvas 
+                        lwc:ref="signatureCanvas"
+                        width="600" 
+                        height="200" 
+                        class="signature-canvas"
+                        onmousedown={startDrawing}
+                        onmousemove={draw}
+                        onmouseup={stopDrawing}
+                        ontouchstart={startDrawing}
+                        ontouchmove={draw}
+                        ontouchend={stopDrawing}>
+                    </canvas>
+                </div>
+                <div class="canvas-controls">
+                    <lightning-button 
+                        variant="neutral" 
+                        label="Clear" 
+                        onclick={clearCanvas}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button 
+                        variant="brand" 
+                        label="Save Signature" 
+                        onclick={saveDrawnSignature}
+                        disabled={!hasDrawnSignature}>
+                    </lightning-button>
+                </div>
+            </div>
+
+            <!-- Type Signature -->
+            <div if:true={isTypeMethod} class="signature-section">
+                <lightning-input 
+                    type="text" 
+                    label="Type Your Full Name" 
+                    value={typedSignature} 
+                    placeholder="Enter your full legal name"
+                    onchange={handleTypedSignatureChange}
+                    class="signature-input">
+                </lightning-input>
+                <div class="typed-signature-preview" if:true={typedSignature}>
+                    <h4 class="slds-text-heading_small">Signature Preview:</h4>
+                    <div class="signature-text">{typedSignature}</div>
+                </div>
+                <lightning-button 
+                    variant="brand" 
+                    label="Save Typed Signature" 
+                    onclick={saveTypedSignature}
+                    disabled={!typedSignature}
+                    class="slds-m-top_small">
+                </lightning-button>
+            </div>
+
+            <!-- Upload Signature -->
+            <div if:true={isUploadMethod} class="signature-section">
+                <lightning-input 
+                    type="file" 
+                    accept="image/*"
+                    label="Upload Signature Image" 
+                    onchange={handleFileUpload}>
+                </lightning-input>
+                <div if:true={uploadedSignatureUrl} class="uploaded-signature-preview">
+                    <h4 class="slds-text-heading_small">Uploaded Signature:</h4>
+                    <img src={uploadedSignatureUrl} alt="Uploaded signature" class="signature-image"/>
+                    <lightning-button 
+                        variant="brand" 
+                        label="Use This Signature" 
+                        onclick={saveUploadedSignature}
+                        class="slds-m-top_small">
+                    </lightning-button>
+                </div>
+            </div>
+
+            <!-- Signer Information -->
+            <div class="signer-info-section slds-m-top_large">
+                <h3 class="slds-text-heading_small slds-m-bottom_medium">Signer Information</h3>
+                
+                <lightning-input 
+                    type="text" 
+                    label="Full Name" 
+                    value={signerName} 
+                    placeholder="Enter your full legal name"
+                    onchange={handleSignerNameChange}
+                    required>
+                </lightning-input>
+
+                <lightning-input 
+                    type="email" 
+                    label="Email Address" 
+                    value={signerEmail} 
+                    placeholder="Enter your email address"
+                    onchange={handleSignerEmailChange}
+                    class="slds-m-top_small"
+                    required>
+                </lightning-input>
+
+                <lightning-input 
+                    type="date" 
+                    label="Date of Signing" 
+                    value={signingDate} 
+                    onchange={handleSigningDateChange}
+                    class="slds-m-top_small"
+                    required>
+                </lightning-input>
+
+                <lightning-textarea 
+                    label="Additional Notes (Optional)" 
+                    value={additionalNotes} 
+                    placeholder="Any additional comments or notes"
+                    onchange={handleAdditionalNotesChange}
+                    class="slds-m-top_small"
+                    max-length="500">
+                </lightning-textarea>
+            </div>
+
+            <!-- Final Actions -->
+            <div class="final-actions slds-m-top_large slds-text-align_center">
+                <lightning-button-group>
+                    <lightning-button 
+                        variant="neutral" 
+                        label="Cancel" 
+                        onclick={handleCancel}>
+                    </lightning-button>
+                    <lightning-button 
+                        variant="success" 
+                        label="Complete Signature" 
+                        onclick={handleCompleteSignature}
+                        disabled={!isSignatureComplete}>
+                    </lightning-button>
+                </lightning-button-group>
+            </div>
+
+            <!-- Success Message -->
+            <div if:true={signatureCompleted} class="success-message slds-m-top_medium">
+                <lightning-formatted-text 
+                    value="✅ Signature completed successfully! Reference ID: {0}"
+                    link-text={signatureReferenceId}>
+                </lightning-formatted-text>
+            </div>
+
+        </div>
+    </lightning-card>
+</template>

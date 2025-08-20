@@ -1,0 +1,209 @@
+<template>
+    <lightning-card title="Document Viewer" icon-name="standard:file">
+        <div class="slds-p-around_medium">
+            <!-- Document Header -->
+            <div class="document-header slds-m-bottom_medium">
+                <div class="slds-grid slds-gutters">
+                    <div class="slds-col slds-size_1-of-2">
+                        <h3 class="slds-text-heading_medium">{documentTitle}</h3>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                            Created: {createdDate} | Status: 
+                            <lightning-badge label={documentStatus} variant={statusVariant}></lightning-badge>
+                        </p>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-text-align_right">
+                        <lightning-button-group>
+                            <lightning-button 
+                                label="Download PDF" 
+                                icon-name="utility:download"
+                                onclick={handleDownload}
+                                disabled={isLoading}>
+                            </lightning-button>
+                            <lightning-button 
+                                label="Request Signature" 
+                                icon-name="utility:signature"
+                                variant="brand"
+                                onclick={handleSignatureRequest}
+                                disabled={isLoading}>
+                            </lightning-button>
+                        </lightning-button-group>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Content Area -->
+            <div class="document-content slds-box">
+                <template if:true={isLoading}>
+                    <div class="slds-text-align_center slds-p-vertical_large">
+                        <lightning-spinner alternative-text="Loading document..." size="medium"></lightning-spinner>
+                        <p class="slds-m-top_small">Loading document content...</p>
+                    </div>
+                </template>
+
+                <template if:false={isLoading}>
+                    <!-- Document Preview -->
+                    <div class="document-preview">
+                        <template if:true={documentContent}>
+                            <div class="document-text" lwc:dom="manual"></div>
+                        </template>
+                        
+                        <template if:false={documentContent}>
+                            <div class="empty-state slds-text-align_center slds-p-vertical_large">
+                                <lightning-icon icon-name="utility:file" size="large" class="slds-m-bottom_small"></lightning-icon>
+                                <h3 class="slds-text-heading_small">No Document Content</h3>
+                                <p class="slds-text-body_regular">Select a document to view its content.</p>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <!-- AI Analysis Panel -->
+            <template if:true={showAIAnalysis}>
+                <div class="ai-analysis-panel slds-m-top_medium">
+                    <lightning-card title="AI Document Analysis" icon-name="standard:einstein">
+                        <div class="slds-p-horizontal_medium">
+                            <template if:true={aiAnalysisLoading}>
+                                <div class="slds-text-align_center slds-p-vertical_medium">
+                                    <lightning-spinner alternative-text="Analyzing document..." size="small"></lightning-spinner>
+                                    <p class="slds-m-top_small">AI is analyzing the document...</p>
+                                </div>
+                            </template>
+
+                            <template if:false={aiAnalysisLoading}>
+                                <!-- Compliance Analysis -->
+                                <div class="analysis-section slds-m-bottom_medium">
+                                    <h4 class="slds-text-heading_small slds-m-bottom_small">Compliance Analysis</h4>
+                                    <div class="compliance-metrics slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_1-of-3">
+                                            <div class="metric-card slds-box slds-text-align_center">
+                                                <div class="metric-value slds-text-heading_large">{complianceScore}%</div>
+                                                <div class="metric-label slds-text-body_small">Compliance Score</div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-3">
+                                            <div class="metric-card slds-box slds-text-align_center">
+                                                <div class="metric-value slds-text-heading_large">{riskLevel}</div>
+                                                <div class="metric-label slds-text-body_small">Risk Level</div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-3">
+                                            <div class="metric-card slds-box slds-text-align_center">
+                                                <div class="metric-value slds-text-heading_large">{issuesFound}</div>
+                                                <div class="metric-label slds-text-body_small">Issues Found</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Key Insights -->
+                                <div class="analysis-section slds-m-bottom_medium">
+                                    <h4 class="slds-text-heading_small slds-m-bottom_small">Key Insights</h4>
+                                    <template for:each={keyInsights} for:item="insight">
+                                        <div key={insight.id} class="insight-item slds-m-bottom_small">
+                                            <div class="slds-media">
+                                                <div class="slds-media__figure">
+                                                    <lightning-icon 
+                                                        icon-name={insight.icon} 
+                                                        size="small" 
+                                                        variant={insight.variant}>
+                                                    </lightning-icon>
+                                                </div>
+                                                <div class="slds-media__body">
+                                                    <p class="slds-text-body_regular">{insight.message}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Recommendations -->
+                                <div class="analysis-section">
+                                    <h4 class="slds-text-heading_small slds-m-bottom_small">Recommendations</h4>
+                                    <template for:each={recommendations} for:item="recommendation">
+                                        <div key={recommendation.id} class="recommendation-item slds-box slds-m-bottom_small">
+                                            <div class="slds-grid">
+                                                <div class="slds-col slds-size_1-of-12">
+                                                    <lightning-badge label={recommendation.priority} variant={recommendation.priorityVariant}></lightning-badge>
+                                                </div>
+                                                <div class="slds-col slds-size_11-of-12">
+                                                    <p class="slds-text-body_regular">{recommendation.text}</p>
+                                                    <template if:true={recommendation.action}>
+                                                        <lightning-button 
+                                                            label={recommendation.actionLabel} 
+                                                            size="small" 
+                                                            class="slds-m-top_x-small"
+                                                            onclick={recommendation.actionHandler}>
+                                                        </lightning-button>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </lightning-card>
+                </div>
+            </template>
+
+            <!-- Signature Status -->
+            <template if:true={signatureRequests}>
+                <div class="signature-status slds-m-top_medium">
+                    <lightning-card title="Signature Status" icon-name="standard:signature">
+                        <div class="slds-p-horizontal_medium">
+                            <template for:each={signatureRequests} for:item="request">
+                                <div key={request.Id} class="signature-request-item slds-border_bottom slds-p-vertical_small">
+                                    <div class="slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_1-of-3">
+                                            <p class="slds-text-body_regular">
+                                                <strong>{request.SignerEmail__c}</strong>
+                                            </p>
+                                            <p class="slds-text-body_small slds-text-color_weak">
+                                                Requested: {request.RequestDate__c}
+                                            </p>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-3 slds-text-align_center">
+                                            <lightning-badge 
+                                                label={request.Status__c} 
+                                                variant={request.StatusVariant}>
+                                            </lightning-badge>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-3 slds-text-align_right">
+                                            <template if:true={request.CompletedDate__c}>
+                                                <p class="slds-text-body_small">
+                                                    Completed: {request.CompletedDate__c}
+                                                </p>
+                                            </template>
+                                            
+<template if:false={request.CompletedDate__c}>
+                        <lightning-button
+                          label="Resend"
+                          size="small"
+                          onclick={handleResendSignature}
+                          data-request-id={request.Id}>
+                        </lightning-button>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </lightning-card>
+        </div>
+      </template>
+
+      <!-- Error Messages -->
+      <template if:true={errorMessage}>
+        <div class="slds-m-top_medium">
+          <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+            <span class="slds-assistive-text">Error</span>
+            <lightning-icon icon-name="utility:error" size="x-small" variant="inverse"></lightning-icon>
+            {errorMessage}
+          </div>
+        </div>
+      </template>
+
+    </div>
+  </lightning-card>
+</template>
