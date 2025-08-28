@@ -241,4 +241,3 @@ showToast(title, message, variant) {
 get isSearchDisabled() {
     return this.isLoading || (!this.searchTerm && !this.hasActiveFilters);
 }
-}

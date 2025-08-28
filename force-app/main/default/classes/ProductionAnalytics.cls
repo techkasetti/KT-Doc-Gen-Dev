@@ -242,7 +242,7 @@ public class ProductionAnalytics {
         Map<String, Integer> typeCount = new Map<String, Integer>();
         
         List<AggregateResult> results = [
-            SELECT ContractType__c type, COUNT(Id) count
+            SELECT ContractType__c type, COUNT(Id) totalcount
             FROM DocumentLifecycleConfiguration__c 
             WHERE CreatedDate >= :startTime 
             AND CreatedDate <= :endTime
@@ -260,7 +260,7 @@ public class ProductionAnalytics {
         Map<String, Integer> regionCount = new Map<String, Integer>();
         
         List<AggregateResult> results = [
-            SELECT Region__c region, COUNT(Id) count
+            SELECT Region__c region, COUNT(Id) totalcount
             FROM DocumentLifecycleConfiguration__c 
             WHERE CreatedDate >= :startTime 
             AND CreatedDate <= :endTime
@@ -364,7 +364,7 @@ private static Map<String, Object> calculateExecutiveInsights() {
 
 private static Map<String, Object> getTopDocumentType() {
     List<AggregateResult> topType = [
-        SELECT ContractType__c type, COUNT(Id) count 
+        SELECT ContractType__c type, COUNT(Id) totalcount 
         FROM DocumentLifecycleConfiguration__c 
         WHERE CreatedDate = LAST_N_DAYS:30 
         GROUP BY ContractType__c 

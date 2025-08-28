@@ -16,16 +16,28 @@ public with sharing class ClauseGenerator {
             throw new AuraHandledException('Failed to generate clause: ' + e.getMessage());
         }
     }
-    public static String generateClause(String region, String role, String contractType) {
-        try {
-            String generatedClause = buildDynamicClause(region, role, contractType);
-            logClauseGeneration(region, role, contractType, generatedClause);
-            return generatedClause;
+    
+        public static String generateClause(String region, String role, String contractType) {
+
+                    try {
+            String clauseContent = buildDynamicClause(region, role, contractType);
+            logClauseGeneration(region, role, contractType, clauseContent);
+            return clauseContent;
         } catch (Exception e) {
-            System.debug('Clause generation failed: ' + e.getMessage());
+                
             return getDefaultClause(contractType);
         }
+
+        // try {
+        //     String generatedClause = buildDynamicClause(region, role, contractType);
+        //     logClauseGeneration(region, role, contractType, generatedClause);
+        //     return generatedClause;
+        // } catch (Exception e) {
+        //     System.debug('Clause generation failed: ' + e.getMessage());
+        //     return getDefaultClause(contractType);
+        // }
     }
+    
 
     private static String buildClauseContent(String region, String role, String contractType, List<String> clauses) {
         StringBuilder clauseBuilder = new StringBuilder();
@@ -69,69 +81,71 @@ public with sharing class ClauseGenerator {
         
         return clauseBuilder.toString();
     }
-    
-    private static void logClauseGeneration(String region, String role, String contractType, String generatedClause) {
-        ContractAudit__c audit = new ContractAudit__c(
-            Timestamp__c = System.now(),
-            ClauseText__c = generatedClause,
-            UserId__c = UserInfo.getUserId(),
-            Action__c = 'Clause Generated',
-            Region__c = region,
-            Role__c = role,
-            ContractType__c = contractType
-        );
-        insert audit;
-    }
 
-       private static String buildDynamicClause(String region, String role, String contractType) {
-        String baseClause = 'This agreement is between the parties ';
+    private static String buildDynamicClause(String region, String role, String contractType) {
+        String baseClause = '';
         
-        // Add region-specific compliance
+        // Region-specific adaptations
         if (region == 'EU') {
-            baseClause += 'and complies with GDPR data protection requirements ';
+            baseClause += 'In accordance with GDPR regulations, ';
         } else if (region == 'US') {
-            baseClause += 'and follows applicable US employment laws ';
+            baseClause += 'Subject to applicable state and federal laws, ';
         }
         
-        // Add role-specific terms  
+        // Role-specific clauses
         if (role == 'Manager') {
-            baseClause += 'with authorized signatory privileges ';
-        } else {
-            baseClause += 'subject to management approval ';
+            baseClause += 'the authorized signatory hereby confirms ';
+        } else if (role == 'Employee') {
+            baseClause += 'the employee acknowledges and agrees ';
         }
         
-        // Add contract type specifics
-        switch on contractType {
-            when 'Employment' {
-                baseClause += 'governing employment terms and conditions.';
-            }
-            when 'NDA' {
-                baseClause += 'regarding confidential information handling.';
-            }
-            when else {
-                baseClause += 'as per standard service terms.';
-            }
+        // Contract type specific terms
+        if (contractType == 'Employment') {
+            baseClause += 'to the terms and conditions of employment as outlined herein.';
+        } else if (contractType == 'NDA') {
+            baseClause += 'to maintain confidentiality of all disclosed information.';
         }
         
         return baseClause;
     }
 
     
-           private static void logClauseGeneration(String region, String role, String contractType, String clause) {
+    private static void logClauseGeneration(String region, String role, String contractType, String generatedClause) {
+        ContractAudit__c audit = new ContractAudit__c(
+            Timestamp__c = System.now(),
+        ClauseText__c = generatedClause,
+        UserId__c = UserInfo.getUserId(),
+        Action__c = 'Clause Generated',
+        Region__c = region,
+        Role__c = role,
+        ContractType__c = contractType
+            );
+        insert audit;
+    }
+
+
+        private static void logClauseGeneration(String region, String role, String contractType, String clause) {
         AuditTrail__c audit = new AuditTrail__c(
             Action__c = 'Clause Generated',
             Details__c = 'Region: ' + region + ', Role: ' + role + ', Type: ' + contractType,
             Timestamp__c = System.now(),
-            Status__c = 'Success'
+            UserId__c = UserInfo.getUserId()
         );
         insert audit;
     }
-
     private static String getDefaultClause(String contractType) {
         return 'Standard ' + contractType + ' clause applies as per company policy.';
     }
-}
 
-
+    private static void logClauseGeneration(String region, String role, String contractType, String clause) {
+        ClauseLibrary__c log = new ClauseLibrary__c(
+            Region__c = region,
+            Role__c = role,
+            ContractType__c = contractType,
+            GeneratedClause__c = clause,
+            GenerationTimestamp__c = System.now()
+        );
+        insert log;
+    }
 
 }

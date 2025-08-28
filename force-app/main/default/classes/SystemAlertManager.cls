@@ -136,7 +136,7 @@ public static Map<String, Integer> getAlertSummary() {
     Map<String, Integer> summary = new Map<String, Integer>();
     
     List<AggregateResult> results = [
-        SELECT Priority__c, COUNT(Id) count
+        SELECT Priority__c, COUNT(Id) totalcount
         FROM SystemAlert__c
         WHERE Status__c = 'ACTIVE'
         GROUP BY Priority__c

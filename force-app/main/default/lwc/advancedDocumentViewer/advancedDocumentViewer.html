@@ -216,24 +216,15 @@
                                 <dd class="slds-item_detail slds-truncate">
                                     {totalViews}
                                 </dd>
-                                <dt class="slds-item_label slds-text-color_weak slds-truncate">
-                                    Downloads:
-                                </dt>
-                                <dd class="slds-item_detail slds-truncate">
-                                    {totalDownloads}
-                                </dd>
-                                <dt class="slds-item_label slds-text-color_weak slds-truncate">
-                                    Last Viewed:
-                                </dt>
-                                <dd class="slds-item_detail slds-truncate">
-                                    {lastViewedDate}
-                                </dd>
-                                <dt class="slds-item_label slds-text-color_weak slds-truncate">
-                                    Shared Count:
-                                </dt>
-                                <dd class="slds-item_detail slds-truncate">
-                                    {shareCount}
-                                </dd>
+
+                                <dt class="slds-item_label slds-text-color_weak slds-truncate">Downloads:</dt>
+                                <dd class="slds-item_detail slds-truncate">{totalDownloads}</dd>
+
+                                <dt class="slds-item_label slds-text-color_weak slds-truncate">Last Viewed:</dt>
+                                <dd class="slds-item_detail slds-truncate">{lastViewedDate}</dd>
+
+                                <dt class="slds-item_label slds-text-color_weak slds-truncate">Shared Count:</dt>
+                                <dd class="slds-item_detail slds-truncate">{shareCount}</dd>
                             </dl>
 
                             <!-- View Trend Chart -->
@@ -248,23 +239,19 @@
                         <div class="slds-p-horizontal_small">
                             <div class="slds-grid slds-wrap slds-gutters">
                                 <div class="slds-col slds-size_1-of-2">
-                                    <lightning-button variant="neutral" label="Duplicate" icon-name="utility:copy"
-                                        onclick={handleDuplicate} class="full-width-button">
+                                    <lightning-button variant="neutral" label="Duplicate" icon-name="utility:copy" onclick={handleDuplicate} class="full-width-button">
                                     </lightning-button>
                                 </div>
                                 <div class="slds-col slds-size_1-of-2">
-                                    <lightning-button variant="neutral" label="Convert" icon-name="utility:convert"
-                                        onclick={handleConvert} class="full-width-button">
+                                    <lightning-button variant="neutral" label="Convert" icon-name="utility:convert" onclick={handleConvert} class="full-width-button">
                                     </lightning-button>
                                 </div>
                                 <div class="slds-col slds-size_1-of-2">
-                                    <lightning-button variant="neutral" label="Archive" icon-name="utility:archive"
-                                        onclick={handleArchive} class="full-width-button">
+                                    <lightning-button variant="neutral" label="Archive" icon-name="utility:archive" onclick={handleArchive} class="full-width-button">
                                     </lightning-button>
                                 </div>
                                 <div class="slds-col slds-size_1-of-2">
-                                    <lightning-button variant="destructive" label="Delete" icon-name="utility:delete"
-                                        onclick={handleDelete} class="full-width-button">
+                                    <lightning-button variant="destructive" label="Delete" icon-name="utility:delete" onclick={handleDelete} class="full-width-button">
                                     </lightning-button>
                                 </div>
                             </div>
@@ -282,13 +269,10 @@
 
                         <!-- Comment Input -->
                         <div class="slds-m-bottom_medium">
-                            <lightning-textarea label="Add a comment" value={newComment}
-                                placeholder="Share your thoughts about this document..."
-                                onchange={handleCommentChange}>
+                            <lightning-textarea label="Add a comment" value={newComment} placeholder="Share your thoughts about this document..." onchange={handleCommentChange}>
                             </lightning-textarea>
                             <div class="slds-m-top_small slds-text-align_right">
-                                <lightning-button variant="brand" label="Post Comment" onclick={handlePostComment}
-                                    disabled={isCommentEmpty}>
+                                <lightning-button variant="brand" label="Post Comment" onclick={handlePostComment} disabled={isCommentEmpty}>
                                 </lightning-button>
                             </div>
                         </div>
@@ -300,9 +284,7 @@
                                     <div key={comment.id} class="comment-item slds-m-bottom_medium">
                                         <div class="slds-media">
                                             <div class="slds-media__figure">
-                                                <lightning-avatar size="medium" src={comment.authorPhoto}
-                                                    fallback-icon-name="standard:user"
-                                                    alternative-text={comment.authorName}>
+                                                <lightning-avatar size="medium" src={comment.authorPhoto} fallback-icon-name="standard:user" alternative-text={comment.authorName}>
                                                 </lightning-avatar>
                                             </div>
                                             <div class="slds-media__body">
@@ -312,13 +294,10 @@
                                                         <p class="slds-text-body_small slds-text-color_weak">{comment.createdDate}</p>
                                                     </div>
                                                     <div class="slds-col slds-no-flex">
-                                                        <lightning-button-menu alternative-text="Comment Actions"
-                                                            icon-name="utility:down" menu-alignment="right">
-                                                            <lightning-menu-item value={comment.id} label="Edit"
-                                                                onclick={handleEditComment}>
+                                                        <lightning-button-menu alternative-text="Comment Actions" icon-name="utility:down" menu-alignment="right">
+                                                            <lightning-menu-item value={comment.id} label="Edit" onclick={handleEditComment}>
                                                             </lightning-menu-item>
-                                                            <lightning-menu-item value={comment.id} label="Delete"
-                                                                onclick={handleDeleteComment}>
+                                                            <lightning-menu-item value={comment.id} label="Delete" onclick={handleDeleteComment}>
                                                             </lightning-menu-item>
                                                         </lightning-button-menu>
                                                     </div>
@@ -330,13 +309,9 @@
 
                                                 <!-- Comment Reactions -->
                                                 <div class="comment-reactions slds-m-top_x-small">
-                                                    <lightning-button variant="base" icon-name="utility:like"
-                                                        icon-position="left" label={comment.likeCount}
-                                                        onclick={handleLikeComment} data-comment-id={comment.id}>
+                                                    <lightning-button variant="base" icon-name="utility:like" icon-position="left" label={comment.likeCount} onclick={handleLikeComment} data-comment-id={comment.id}>
                                                     </lightning-button>
-                                                    <lightning-button variant="base" icon-name="utility:reply"
-                                                        icon-position="left" label="Reply" onclick={handleReplyComment}
-                                                        data-comment-id={comment.id}>
+                                                    <lightning-button variant="base" icon-name="utility:reply" icon-position="left" label="Reply" onclick={handleReplyComment} data-comment-id={comment.id}>
                                                     </lightning-button>
                                                 </div>
 
@@ -347,17 +322,13 @@
                                                             <div key={reply.id} class="reply-item slds-m-bottom_small">
                                                                 <div class="slds-media">
                                                                     <div class="slds-media__figure">
-                                                                        <lightning-avatar size="small"
-                                                                            src={reply.authorPhoto}
-                                                                            fallback-icon-name="standard:user"
-                                                                            alternative-text={reply.authorName}>
+                                                                        <lightning-avatar size="small" src={reply.authorPhoto} fallback-icon-name="standard:user" alternative-text={reply.authorName}>
                                                                         </lightning-avatar>
                                                                     </div>
                                                                     <div class="slds-media__body">
                                                                         <p class="slds-text-body_small">
                                                                             <strong>{reply.authorName}</strong>
-                                                                            <span
-                                                                                class="slds-text-color_weak">{reply.createdDate}</span>
+                                                                            <span class="slds-text-color_weak">{reply.createdDate}</span>
                                                                         </p>
                                                                         <p class="slds-text-body_small">{reply.content}</p>
                                                                     </div>
@@ -381,52 +352,43 @@
 
         <!-- Share Modal -->
         <template if:true={showShareModal}>
-            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-share"
-                class="slds-modal slds-fade-in-open">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-share" class="slds-modal slds-fade-in-open">
                 <div class="slds-modal__container">
                     <header class="slds-modal__header">
-                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
-                            title="Close" onclick={handleCloseShareModal}>
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={handleCloseShareModal}>
                             <lightning-icon icon-name="utility:close" alternative-text="close" size="small">
                             </lightning-icon>
                             <span class="slds-assistive-text">Close</span>
                         </button>
-                        <h2 id="modal-heading-share" class="slds-modal__title slds-hyphenate"> Share Document </h2>
+                        <h2 id="modal-heading-share" class="slds-modal__title slds-hyphenate">Share Document</h2>
                     </header>
                     <div class="slds-modal__content slds-p-around_medium">
                         <div class="slds-form-element">
-                            <label class="slds-form-element__label" for="share-url"> Document URL </label>
+                            <label class="slds-form-element__label" for="share-url">Document URL</label>
                             <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_right">
-                                <lightning-input id="share-url" type="url" value={shareUrl} readonly
-                                    class="slds-input">
+                                <lightning-input id="share-url" type="url" value={shareUrl} readonly class="slds-input">
                                 </lightning-input>
-                                <button
-                                    class="slds-input__icon slds-input__icon_right slds-button slds-button_icon"
-                                    onclick={handleCopyUrl} title="Copy URL">
+                                <button class="slds-input__icon slds-input__icon_right slds-button slds-button_icon" onclick={handleCopyUrl} title="Copy URL">
                                     <lightning-icon icon-name="utility:copy" size="x-small">
                                     </lightning-icon>
                                 </button>
                             </div>
                         </div>
                         <div class="slds-form-element slds-m-top_medium">
-                            <label class="slds-form-element__label" for="share-email"> Share via Email </label>
-                            <lightning-input id="share-email" type="email"
-                                placeholder="Enter email addresses separated by commas"
-                                value={shareEmails} onchange={handleShareEmailChange}>
+                            <label class="slds-form-element__label" for="share-email">Share via Email</label>
+                            <lightning-input id="share-email" type="email" placeholder="Enter email addresses separated by commas" value={shareEmails} onchange={handleShareEmailChange}>
                             </lightning-input>
                         </div>
                         <div class="slds-form-element slds-m-top_medium">
-                            <label class="slds-form-element__label" for="share-message"> Message (Optional) </label>
-                            <lightning-textarea id="share-message" placeholder="Add a personal message..."
-                                value={shareMessage} onchange={handleShareMessageChange}>
+                            <label class="slds-form-element__label" for="share-message">Message (Optional)</label>
+                            <lightning-textarea id="share-message" placeholder="Add a personal message..." value={shareMessage} onchange={handleShareMessageChange}>
                             </lightning-textarea>
                         </div>
                     </div>
                     <footer class="slds-modal__footer">
                         <lightning-button variant="neutral" label="Cancel" onclick={handleCloseShareModal}>
                         </lightning-button>
-                        <lightning-button variant="brand" label="Send" onclick={handleSendShare}
-                            disabled={isShareButtonDisabled}>
+                        <lightning-button variant="brand" label="Send" onclick={handleSendShare} disabled={isShareButtonDisabled}>
                         </lightning-button>
                     </footer>
                 </div>
@@ -436,20 +398,17 @@
 
         <!-- Version History Modal -->
         <template if:true={showVersionModal}>
-            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-versions"
-                class="slds-modal slds-fade-in-open slds-modal_large">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-versions" class="slds-modal slds-fade-in-open slds-modal_large">
                 <div class="slds-modal__container">
                     <header class="slds-modal__header">
-                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
-                            title="Close" onclick={handleCloseVersionModal}>
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={handleCloseVersionModal}>
                             <lightning-icon icon-name="utility:close" alternative-text="close" size="small">
                             </lightning-icon>
                         </button>
-                        <h2 id="modal-heading-versions" class="slds-modal__title"> Document Version History </h2>
+                        <h2 id="modal-heading-versions" class="slds-modal__title">Document Version History</h2>
                     </header>
                     <div class="slds-modal__content slds-p-around_medium">
-                        <lightning-datatable key-field="id" data={versionHistory} columns={versionColumns}
-                            hide-checkbox-column="true" onrowaction={handleVersionAction}>
+                        <lightning-datatable key-field="id" data={versionHistory} columns={versionColumns} hide-checkbox-column="true" onrowaction={handleVersionAction}>
                         </lightning-datatable>
                     </div>
                     <footer class="slds-modal__footer">

@@ -1,3 +1,8 @@
+/**
+ * @description Advanced Document Search Controller with AI-powered search capabilities
+ * @author Anara AI Development Team
+ * @version 1.0
+ */
 public with sharing class DocumentSearchController {
     
     @AuraEnabled(cacheable=true)

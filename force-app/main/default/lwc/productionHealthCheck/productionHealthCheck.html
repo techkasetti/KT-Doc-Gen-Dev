@@ -1,7 +1,9 @@
-<template>
+
+<!-- version 3 -->
+
+<!-- <template>
     <lightning-card title="System Health Dashboard" icon-name="standard:dashboard">
         
-        <!-- Overall Health Status -->
         <div class="slds-m-around_medium">
             <div class={overallHealthClass}>
                 <div class="slds-media__figure">
@@ -14,12 +16,10 @@
             </div>
         </div>
 
-        <!-- Health Check Details -->
         <template if:true={healthData}>
             <div class="slds-m-around_medium">
                 <lightning-accordion allow-multiple-sections-open>
                     
-                    <!-- Custom Objects Health -->
                     <lightning-accordion-section name="customObjects" label="Custom Objects">
                         <div class="health-section">
                             <div class={getStatusClass}>
@@ -41,7 +41,6 @@
                         </div>
                     </lightning-accordion-section>
 
-                    <!-- Permission Sets Health -->
                     <lightning-accordion-section name="permissions" label="Permission Sets">
                         <div class="health-section">
                             <div class={getPermissionStatusClass}>
@@ -63,7 +62,6 @@
                         </div>
                     </lightning-accordion-section>
 
-                    <!-- Templates Health -->
                     <lightning-accordion-section name="templates" label="Document Templates">
                         <div class="health-section">
                             <div class={getTemplateStatusClass}>
@@ -75,7 +73,6 @@
                         </div>
                     </lightning-accordion-section>
 
-                    <!-- Compliance Rules Health -->
                     <lightning-accordion-section name="compliance" label="Compliance Rules">
                         <div class="health-section">
                             <div class={getComplianceStatusClass}>
@@ -91,7 +88,6 @@
             </div>
         </template>
 
-        <!-- Action Buttons -->
         <div slot="footer" class="slds-clearfix">
             <div class="slds-float_right">
                 <lightning-button 
@@ -110,7 +106,6 @@
             </div>
         </div>
 
-        <!-- Test Results -->
         
 
 <template if:true={testResults}>
@@ -122,12 +117,10 @@
         </div>
     </template>
 
-    <!-- Loading Spinner -->
     <template if:true={isLoading}>
         <lightning-spinner alternative-text="Checking system health..." size="medium"></lightning-spinner>
     </template>
 
-    <!-- Error Message -->
     <template if:true={errorMessage}>
         <div class="slds-notify slds-notify_alert slds-theme_error slds-m-around_medium" role="alert">
             <lightning-icon icon-name="utility:error" size="x-small" class="slds-m-right_x-small"></lightning-icon>
@@ -135,4 +128,4 @@
         </div>
     </template>
 </lightning-card>
-</template>
+</template> -->

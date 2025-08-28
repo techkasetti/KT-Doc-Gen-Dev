@@ -11,13 +11,15 @@ import getDocumentAnalytics from '@salesforce/apex/DocumentViewerController.getD
 import getDocumentComments from '@salesforce/apex/DocumentViewerController.getDocumentComments';
 import addDocumentComment from '@salesforce/apex/DocumentViewerController.addDocumentComment';
 import shareDocument from '@salesforce/apex/DocumentViewerController.shareDocument';
+import updateAnalytics from '@salesforce/apex/DocumentViewerController.updateAnalytics';
 import getVersionHistory from '@salesforce/apex/DocumentViewerController.getVersionHistory';
+import deleteComment from '@salesforce/apex/DocumentViewerController.deleteComment';
 
 export default class AdvancedDocumentViewer extends LightningElement {
     @api recordId;
     @api documentId;
-    @api enableCollaboration = true;
-    @api showMetadata = true;
+    @api enableCollaboration;
+    @api showMetadata;
 
     // Document properties
     @track documentDetails = {};
@@ -35,6 +37,11 @@ export default class AdvancedDocumentViewer extends LightningElement {
     @track showPreview = false;
     @track showShareModal = false;
     @track showVersionModal = false;
+
+    // File type flags
+    @track isPDF = false;
+    @track isImage = false;
+    @track isText = false;
 
     // Compliance data
     @track hasComplianceData = false;
@@ -136,12 +143,16 @@ export default class AdvancedDocumentViewer extends LightningElement {
             this.createdBy = result.createdBy;
             this.documentUrl = result.downloadUrl;
 
-            // Determine if preview is supported
+            // Determine if preview is supported and set file type flags
             this.showPreview = this.isPreviewSupported(result.fileExtension);
+            this.setFileTypeFlags(result.fileExtension);
 
             if (result.fileExtension === 'txt' || result.fileExtension === 'csv') {
                 this.textContent = result.textContent;
             }
+
+            // Update view count
+            this.updateViewCount(documentId);
         } catch (error) {
             console.error('Error loading document details:', error);
             throw error;
@@ -181,7 +192,8 @@ export default class AdvancedDocumentViewer extends LightningElement {
                         text: insight.text,
                         iconName: this.getInsightIconName(insight.type),
                         hasConfidence: insight.confidence !== undefined,
-                        confidence: insight.confidence
+                        confidence: insight.confidence,
+                        type: insight.type
                     }));
                 }
             }
@@ -213,8 +225,13 @@ export default class AdvancedDocumentViewer extends LightningElement {
                 this.hasComments = true;
                 this.comments = comments.map(comment => ({
                     ...comment,
+                    createdDate: this.formatDate(comment.createdDate),
                     hasReplies: comment.replies && comment.replies.length > 0,
-                    likeCount: comment.likeCount || 0
+                    likeCount: comment.likeCount || 0,
+                    replies: comment.replies ? comment.replies.map(reply => ({
+                        ...reply,
+                        createdDate: this.formatDate(reply.createdDate)
+                    })) : []
                 }));
             }
         } catch (error) {
@@ -223,6 +240,268 @@ export default class AdvancedDocumentViewer extends LightningElement {
         }
     }
 
+    // Helper methods
+    isPreviewSupported(extension) {
+        const supportedTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'txt', 'csv', 'log'];
+        return supportedTypes.includes(extension?.toLowerCase());
+    }
+
+    setFileTypeFlags(extension) {
+        const ext = extension?.toLowerCase();
+        this.isPDF = ext === 'pdf';
+        this.isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'].includes(ext);
+        this.isText = ['txt', 'csv', 'log'].includes(ext);
+    }
+
+    formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    }
+
+    getInsightIconName(insightType) {
+        const iconMap = {
+            'compliance': 'utility:shield',
+            'privacy': 'utility:privacy',
+            'security': 'utility:lock',
+            'classification': 'utility:tags',
+            'recommendation': 'utility:info',
+            'content': 'utility:text',
+            'quality': 'utility:check',
+            'risk': 'utility:warning'
+        };
+        return iconMap[insightType] || 'utility:info';
+    }
+
+    // Event handlers
+    handleDownload() {
+        if (this.documentUrl) {
+            window.open(this.documentUrl, '_blank');
+            this.recordDownload();
+        }
+    }
+
+    handleExportPDF() {
+        this.showToast('Info', 'PDF export functionality coming soon', 'info');
+    }
+
+    handleShare() {
+        this.shareUrl = window.location.origin + '/lightning/r/ContentDocument/' + (this.documentId || this.recordId) + '/view';
+        this.showShareModal = true;
+    }
+
+    handleAnalyze() {
+        this.showToast('Info', 'Initiating compliance analysis...', 'info');
+        // Implementation would call analysis service
+    }
+
+    handleViewVersions() {
+        this.loadVersionHistory();
+        this.showVersionModal = true;
+    }
+
+    handleViewAudit() {
+        this.showToast('Info', 'Audit trail functionality coming soon', 'info');
+    }
+
+    handleDuplicate() {
+        this.showToast('Info', 'Document duplication functionality coming soon', 'info');
+    }
+
+    handleConvert() {
+        this.showToast('Info', 'Document conversion functionality coming soon', 'info');
+    }
+
+    handleArchive() {
+        this.showToast('Info', 'Document archiving functionality coming soon', 'info');
+    }
+
+    handleDelete() {
+        if (confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+            this.showToast('Info', 'Document deletion functionality coming soon', 'info');
+        }
+    }
+
+    // Comment handlers
+    handleCommentChange(event) {
+        this.newComment = event.target.value;
+        this.isCommentEmpty = !this.newComment.trim();
+    }
+
+    async handlePostComment() {
+        if (!this.newComment.trim()) return;
+
+        try {
+            await addDocumentComment({
+                documentId: this.documentId || this.recordId,
+                comment: this.newComment
+            });
+
+            this.newComment = '';
+            this.isCommentEmpty = true;
+            await this.loadComments(this.documentId || this.recordId);
+            this.showToast('Success', 'Comment added successfully', 'success');
+        } catch (error) {
+            console.error('Error posting comment:', error);
+            this.showToast('Error', 'Failed to post comment', 'error');
+        }
+    }
+
+    handleEditComment(event) {
+        const commentId = event.target.value;
+        this.showToast('Info', 'Comment editing functionality coming soon', 'info');
+    }
+
+    async handleDeleteComment(event) {
+        const commentId = event.currentTarget.dataset.value;
+        if (confirm('Are you sure you want to delete this comment?')) {
+            try {
+                await deleteComment({ commentId: commentId });
+                await this.loadComments(this.documentId || this.recordId);
+                this.showToast('Success', 'Comment deleted successfully', 'success');
+            } catch (error) {
+                console.error('Error deleting comment:', error);
+                this.showToast('Error', 'Failed to delete comment', 'error');
+            }
+        }
+    }
+
+    handleLikeComment(event) {
+        const commentId = event.target.dataset.commentId;
+        this.showToast('Info', 'Comment reactions coming soon', 'info');
+    }
+
+    handleReplyComment(event) {
+        const commentId = event.target.dataset.commentId;
+        this.showToast('Info', 'Comment replies coming soon', 'info');
+    }
+
+    // Share modal handlers
+    handleCloseShareModal() {
+        this.showShareModal = false;
+        this.shareEmails = '';
+        this.shareMessage = '';
+        this.isShareButtonDisabled = true;
+    }
+
+    handleCopyUrl() {
+        navigator.clipboard.writeText(this.shareUrl).then(() => {
+            this.showToast('Success', 'URL copied to clipboard', 'success');
+        }).catch(() => {
+            this.showToast('Error', 'Failed to copy URL', 'error');
+        });
+    }
+
+    handleShareEmailChange(event) {
+        this.shareEmails = event.target.value;
+        this.isShareButtonDisabled = !this.shareEmails.trim();
+    }
+
+    handleShareMessageChange(event) {
+        this.shareMessage = event.target.value;
+    }
+
+    async handleSendShare() {
+        if (!this.shareEmails.trim()) return;
+
+        try {
+            await shareDocument({
+                documentId: this.documentId || this.recordId,
+                emails: this.shareEmails,
+                message: this.shareMessage
+            });
+
+            this.showToast('Success', 'Document shared successfully', 'success');
+            this.handleCloseShareModal();
+        } catch (error) {
+            console.error('Error sharing document:', error);
+            this.showToast('Error', 'Failed to share document', 'error');
+        }
+    }
+
+    // Version modal handlers
+    handleCloseVersionModal() {
+        this.showVersionModal = false;
+    }
+
+    async loadVersionHistory() {
+        try {
+            const versions = await getVersionHistory({ 
+                documentId: this.documentId || this.recordId 
+            });
+            this.versionHistory = versions.map(version => ({
+                ...version,
+                modifiedDate: this.formatDate(version.modifiedDate),
+                fileSize: this.formatFileSize(version.contentSize)
+            }));
+        } catch (error) {
+            console.error('Error loading version history:', error);
+            this.showToast('Error', 'Failed to load version history', 'error');
+        }
+    }
+
+    handleVersionAction(event) {
+        const action = event.detail.action;
+        const row = event.detail.row;
+
+        switch (action.name) {
+            case 'view':
+                this.handleViewVersion(row);
+                break;
+            case 'download':
+                this.handleDownloadVersion(row);
+                break;
+            case 'restore':
+                this.handleRestoreVersion(row);
+                break;
+        }
+    }
+
+    handleViewVersion(version) {
+        window.open(version.downloadUrl, '_blank');
+    }
+
+    handleDownloadVersion(version) {
+        window.open(version.downloadUrl, '_blank');
+    }
+
+    handleRestoreVersion(version) {
+        this.showToast('Info', 'Version restore functionality coming soon', 'info');
+    }
+
+    // Analytics tracking
+    async recordDownload() {
+        try {
+            await updateAnalytics({
+                documentId: this.documentId || this.recordId,
+                action: 'download'
+            });
+            this.totalDownloads += 1;
+        } catch (error) {
+            console.error('Error updating download count:', error);
+        }
+    }
+
+    async updateViewCount(documentId) {
+        try {
+            await updateAnalytics({
+                documentId: documentId,
+                action: 'view'
+            });
+        } catch (error) {
+            console.error('Error updating view count:', error);
+        }
+    }
+
+    // Chart initialization
     initializeChart() {
         if (this.chartInitialized) return;
 
@@ -233,6 +512,8 @@ export default class AdvancedDocumentViewer extends LightningElement {
             })
             .catch(error => {
                 console.error('Error loading ChartJS:', error);
+                // Fallback to simple canvas chart
+                this.renderSimpleChart();
             });
     }
 
@@ -276,249 +557,50 @@ export default class AdvancedDocumentViewer extends LightningElement {
         });
     }
 
-    // File type detection and preview support
-    get isPDF() {
-        return this.fileExtension === 'pdf';
+    renderSimpleChart() {
+        setTimeout(() => {
+            const canvas = this.template.querySelector('#viewTrendChart');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                this.drawSimpleChart(ctx, canvas.width, canvas.height);
+                this.chartInitialized = true;
+            }
+        }, 100);
     }
 
-    get isImage() {
-        return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'].includes(this.fileExtension?.toLowerCase());
-    }
+    drawSimpleChart(ctx, width, height) {
+        // Simple line chart for view trends
+        ctx.clearRect(0, 0, width, height);
+        ctx.strokeStyle = '#0176d3';
+        ctx.lineWidth = 2;
 
-    get isText() {
-        return ['txt', 'csv', 'log'].includes(this.fileExtension?.toLowerCase());
-    }
+        // Sample data points
+        const data = [10, 15, 12, 20, 18, 25, 22];
+        const stepX = width / (data.length - 1);
+        const maxY = Math.max(...data);
 
-    isPreviewSupported(fileExtension) {
-        const supportedTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'txt', 'csv', 'log'];
-        return supportedTypes.includes(fileExtension?.toLowerCase());
-    }
+        ctx.beginPath();
+        data.forEach((value, index) => {
+            const x = index * stepX;
+            const y = height - (value / maxY) * height;
 
-    // Utility methods
-    formatFileSize(bytes) {
-        if (!bytes) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    }
-
-    getInsightIconName(insightType) {
-        const iconMap = {
-            'compliance': 'utility:shield',
-            'privacy': 'utility:privacy',
-            'security': 'utility:lock',
-            'classification': 'utility:tags',
-            'recommendation': 'utility:info'
-        };
-        return iconMap[insightType] || 'utility:info';
-    }
-
-    // Event handlers
-    handleDownload() {
-        if (this.documentUrl) {
-            window.open(this.documentUrl, '_blank');
-            this.recordDownload();
-        }
-    }
-
-    handleExportPDF() {
-        // Implementation would depend on your PDF conversion service
-        this.showToast('Info', 'PDF export functionality coming soon', 'info');
-    }
-
-    handleShare() {
-        this.shareUrl = window.location.origin + '/lightning/r/ContentDocument/' + this.documentId + '/view';
-        this.showShareModal = true;
-    }
-
-    handleAnalyze() {
-        // Trigger compliance analysis
-        this.showToast('Info', 'Initiating compliance analysis...', 'info');
-        // Implementation would call analysis service
-    }
-
-    handleViewVersions() {
-        this.loadVersionHistory();
-        this.showVersionModal = true;
-    }
-
-    handleViewAudit() {
-        // Navigate to audit trail or show modal
-        this.showToast('Info', 'Audit trail functionality coming soon', 'info');
-    }
-
-    async loadVersionHistory() {
-        try {
-            const versions = await getVersionHistory({ documentId: this.documentId });
-            this.versionHistory = versions.map(version => ({
-                ...version,
-                fileSize: this.formatFileSize(version.contentSize)
-            }));
-        } catch (error) {
-            console.error('Error loading version history:', error);
-            this.showToast('Error', 'Failed to load version history', 'error');
-        }
-    }
-
-    handleVersionAction(event) {
-        const action = event.detail.action;
-        const row = event.detail.row;
-
-        switch (action.name) {
-            case 'view':
-                this.handleViewVersion(row);
-                break;
-            case 'download':
-                this.handleDownloadVersion(row);
-                break;
-            case 'restore':
-                this.handleRestoreVersion(row);
-                break;
-        }
-    }
-
-    handleViewVersion(version) {
-        // Open version in new tab or modal
-        window.open(version.downloadUrl, '_blank');
-    }
-
-    handleDownloadVersion(version) {
-        window.open(version.downloadUrl, '_blank');
-    }
-
-    handleRestoreVersion(version) {
-        // Implementation would restore the selected version
-        this.showToast('Info', 'Version restore functionality coming soon', 'info');
-    }
-
-    // Quick Actions
-    handleDuplicate() {
-        this.showToast('Info', 'Document duplication functionality coming soon', 'info');
-    }
-
-    handleConvert() {
-        this.showToast('Info', 'Document conversion functionality coming soon', 'info');
-    }
-
-    handleArchive() {
-        this.showToast('Info', 'Document archiving functionality coming soon', 'info');
-    }
-
-    handleDelete() {
-        if (confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
-            this.showToast('Info', 'Document deletion functionality coming soon', 'info');
-        }
-    }
-
-    // Comment functionality
-    handleCommentChange(event) {
-        this.newComment = event.target.value;
-        this.isCommentEmpty = !this.newComment.trim();
-    }
-
-    async handlePostComment() {
-        if (!this.newComment.trim()) return;
-
-        try {
-            await addDocumentComment({
-                documentId: this.documentId,
-                comment: this.newComment
-            });
-
-            this.newComment = '';
-            this.isCommentEmpty = true;
-            await this.loadComments(this.documentId);
-            this.showToast('Success', 'Comment added successfully', 'success');
-        } catch (error) {
-            console.error('Error posting comment:', error);
-            this.showToast('Error', 'Failed to post comment', 'error');
-        }
-    }
-
-    handleEditComment(event) {
-        const commentId = event.target.value;
-        // Implementation for editing comments
-        this.showToast('Info', 'Comment editing functionality coming soon', 'info');
-    }
-
-    handleDeleteComment(event) {
-        const commentId = event.target.value;
-        if (confirm('Are you sure you want to delete this comment?')) {
-            // Implementation for deleting comments
-            this.showToast('Info', 'Comment deletion functionality coming soon', 'info');
-        }
-    }
-
-    handleLikeComment(event) {
-        const commentId = event.target.dataset.commentId;
-        // Implementation for liking comments
-        this.showToast('Info', 'Comment reactions coming soon', 'info');
-    }
-
-    handleReplyComment(event) {
-        const commentId = event.target.dataset.commentId;
-        // Implementation for replying to comments
-        this.showToast('Info', 'Comment replies coming soon', 'info');
-    }
-
-    // Share modal handlers
-    handleCloseShareModal() {
-        this.showShareModal = false;
-        this.shareEmails = '';
-        this.shareMessage = '';
-    }
-
-    handleShareEmailChange(event) {
-        this.shareEmails = event.target.value;
-        this.isShareButtonDisabled = !this.shareEmails.trim();
-    }
-
-    handleShareMessageChange(event) {
-        this.shareMessage = event.target.value;
-    }
-
-    handleCopyUrl() {
-        navigator.clipboard.writeText(this.shareUrl).then(() => {
-            this.showToast('Success', 'URL copied to clipboard', 'success');
-        }).catch(() => {
-            this.showToast('Error', 'Failed to copy URL', 'error');
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
         });
-    }
+        ctx.stroke();
 
-    async handleSendShare() {
-        if (!this.shareEmails.trim()) return;
-
-        try {
-            await shareDocument({
-                documentId: this.documentId,
-                emails: this.shareEmails,
-                message: this.shareMessage
-            });
-
-            this.showToast('Success', 'Document shared successfully', 'success');
-            this.handleCloseShareModal();
-        } catch (error) {
-            console.error('Error sharing document:', error);
-            this.showToast('Error', 'Failed to share document', 'error');
-        }
-    }
-
-    // Version modal handlers
-    handleCloseVersionModal() {
-        this.showVersionModal = false;
-    }
-
-    // Analytics tracking
-    recordDownload() {
-        // Track download event
-        // Implementation would call analytics service
+        // Add data points
+        ctx.fillStyle = '#0176d3';
+        data.forEach((value, index) => {
+            const x = index * stepX;
+            const y = height - (value / maxY) * height;
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, 2 * Math.PI);
+            ctx.fill();
+        });
     }
 
     showToast(title, message, variant) {

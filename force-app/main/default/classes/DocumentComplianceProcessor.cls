@@ -379,10 +379,10 @@ private String getPIIType(String pattern) {
     if (pattern.contains('\\/')) return 'Date';
     return 'Unknown PII';
 }
-private Boolean hasDataProtectionClauses(String content) {
+    private Boolean hasDataProtectionClauses(String content) {
     List<String> protectionTerms = new List<String>{
-        'data protection', 'privacy', 'confidential', 'secure', 'encrypt', 'gdpr', 'hipaa', 
-        'personal data', 'sensitive information'
+        'data protection', 'privacy', 'confidential', 'secure', 'encrypt', 
+        'gdpr', 'hipaa', 'personal data', 'sensitive information'
     };
     String lowerContent = content.toLowerCase();
     for (String term : protectionTerms) {
@@ -397,27 +397,13 @@ private Boolean assessFrameworkCompliance(String content, RegulatoryFramework fr
     try {
         String lowerContent = content.toLowerCase();
         switch on framework.code {
-            when 'GDPR' {
-                return assessGDPRCompliance(lowerContent);
-            }
-            when 'HIPAA' {
-                return assessHIPAACompliance(lowerContent);
-            }
-            when 'SOX' {
-                return assessSOXCompliance(lowerContent);
-            }
-            when 'CCPA' {
-                return assessCCPACompliance(lowerContent);
-            }
-            when 'PIPEDA' {
-                return assessPIPEDACompliance(lowerContent);
-            }
-            when 'LGPD' {
-                return assessLGPDCompliance(lowerContent);
-            }
-            when else {
-                return true; // Default to compliant for unknown frameworks
-            }
+            when 'GDPR' { return assessGDPRCompliance(lowerContent); }
+            when 'HIPAA' { return assessHIPAACompliance(lowerContent); }
+            when 'SOX' { return assessSOXCompliance(lowerContent); }
+            when 'CCPA' { return assessCCPACompliance(lowerContent); }
+            when 'PIPEDA' { return assessPIPEDACompliance(lowerContent); }
+            when 'LGPD' { return assessLGPDCompliance(lowerContent); }
+            when else { return true; } // Default to compliant for unknown frameworks
         }
     } catch (Exception e) {
         System.debug('Framework compliance assessment error: ' + e.getMessage());
@@ -427,7 +413,7 @@ private Boolean assessFrameworkCompliance(String content, RegulatoryFramework fr
 
 private Boolean assessGDPRCompliance(String content) {
     List<String> gdprRequirements = new List<String>{
-        'lawful basis', 'consent', 'data subject rights', 'data protection officer', 
+        'lawful basis', 'consent', 'data subject rights', 'data protection officer',
         'breach notification', 'privacy by design', 'legitimate interest'
     };
     Integer found = 0;
@@ -455,8 +441,8 @@ private Boolean assessHIPAACompliance(String content) {
 
 private Boolean assessSOXCompliance(String content) {
     List<String> soxRequirements = new List<String>{
-        'internal controls', 'financial reporting', 'audit', 'segregation of duties',
-        'documentation', 'certification'
+        'internal controls', 'financial reporting', 'audit', 
+        'segregation of duties', 'documentation', 'certification'
     };
     Integer found = 0;
     for (String requirement : soxRequirements) {
@@ -469,8 +455,8 @@ private Boolean assessSOXCompliance(String content) {
 
 private Boolean assessCCPACompliance(String content) {
     List<String> ccpaRequirements = new List<String>{
-        'california consumer privacy act', 'ccpa', 'right to know', 'right to delete',
-        'opt-out', 'personal information', 'sale of personal information'
+        'california consumer privacy act', 'ccpa', 'right to know', 
+        'right to delete', 'opt-out', 'personal information', 'sale of personal information'
     };
     Integer found = 0;
     for (String requirement : ccpaRequirements) {
@@ -483,8 +469,8 @@ private Boolean assessCCPACompliance(String content) {
 
 private Boolean assessPIPEDACompliance(String content) {
     List<String> pipedaRequirements = new List<String>{
-        'pipeda', 'personal information protection', 'privacy breach', 'consent', 
-        'collection limitation'
+        'pipeda', 'personal information protection', 'privacy breach', 
+        'consent', 'collection limitation'
     };
     Integer found = 0;
     for (String requirement : pipedaRequirements) {
@@ -529,7 +515,6 @@ private Integer assessContentRisk(ContentVersion document) {
         return 50; // Default moderate risk
     }
 }
-
 private Integer assessAccessRisk(ContentVersion document) {
     try {
         // Check sharing and visibility settings
@@ -556,15 +541,14 @@ private Integer assessRetentionRisk(ContentVersion document) {
     try {
         Integer daysSinceCreation = Date.today().daysBetween(document.CreatedDate.date());
         Integer riskScore = 0;
-
         // Risk increases with age without explicit retention policy
-        if (daysSinceCreation > 2555) {        // > 7 years
+        if (daysSinceCreation > 2555) { // > 7 years
             riskScore = 80;
         } else if (daysSinceCreation > 1825) { // > 5 years
             riskScore = 60;
         } else if (daysSinceCreation > 1095) { // > 3 years
             riskScore = 40;
-        } else if (daysSinceCreation > 365) {  // > 1 year
+        } else if (daysSinceCreation > 365) { // > 1 year
             riskScore = 20;
         }
         return riskScore;
@@ -578,18 +562,15 @@ private Integer assessEncryptionRisk(ContentVersion document) {
         // Check if document has encryption indicators
         String content = extractTextContent(document);
         Integer riskScore = 50; // Default moderate risk
-
         // Look for encryption mentions
         if (content.toLowerCase().contains('encrypted') || content.toLowerCase().contains('encryption')) {
             riskScore = 20; // Low risk if encryption is mentioned
         }
-
         // Check file type - some formats have built-in security
         String fileExt = document.FileExtension?.toLowerCase();
         if (fileExt == 'pdf') {
             riskScore = 30; // PDFs can have built-in security
         }
-
         return riskScore;
     } catch (Exception e) {
         return 70; // Default high risk if can't assess
@@ -598,8 +579,8 @@ private Integer assessEncryptionRisk(ContentVersion document) {
 
 private Boolean containsFinancialTerms(String content) {
     List<String> financialTerms = new List<String>{
-        'bank', 'credit card', 'payment', 'invoice', 'financial', 'accounting', 
-        'revenue', 'profit', 'budget', 'cost', 'expense'
+        'bank', 'credit card', 'payment', 'invoice', 'financial', 
+        'accounting', 'revenue', 'profit', 'budget', 'cost', 'expense'
     };
     String lowerContent = content.toLowerCase();
     for (String term : financialTerms) {
@@ -612,8 +593,8 @@ private Boolean containsFinancialTerms(String content) {
 
 private Boolean containsHealthTerms(String content) {
     List<String> healthTerms = new List<String>{
-        'medical', 'health', 'patient', 'diagnosis', 'treatment', 'hospital', 
-        'doctor', 'physician', 'clinical', 'healthcare', 'medication'
+        'medical', 'health', 'patient', 'diagnosis', 'treatment', 
+        'hospital', 'doctor', 'physician', 'clinical', 'healthcare', 'medication'
     };
     String lowerContent = content.toLowerCase();
     for (String term : healthTerms) {
@@ -626,8 +607,9 @@ private Boolean containsHealthTerms(String content) {
 
 private Boolean containsLegalTerms(String content) {
     List<String> legalTerms = new List<String>{
-        'contract', 'agreement', 'legal', 'clause', 'terms', 'conditions', 'liability',
-        'indemnity', 'jurisdiction', 'governing law', 'dispute'
+        'contract', 'agreement', 'legal', 'clause', 'terms', 
+        'conditions', 'liability', 'indemnity', 'jurisdiction', 
+        'governing law', 'dispute'
     };
     String lowerContent = content.toLowerCase();
     for (String term : legalTerms) {
@@ -640,8 +622,8 @@ private Boolean containsLegalTerms(String content) {
 
 private Boolean containsHRTerms(String content) {
     List<String> hrTerms = new List<String>{
-        'employee', 'employment', 'salary', 'benefits', 'personnel', 'human resources', 
-        'hr', 'recruitment', 'onboarding', 'performance review'
+        'employee', 'employment', 'salary', 'benefits', 'personnel', 
+        'human resources', 'hr', 'recruitment', 'onboarding', 'performance review'
     };
     String lowerContent = content.toLowerCase();
     for (String term : hrTerms) {
@@ -654,8 +636,8 @@ private Boolean containsHRTerms(String content) {
 
 private Boolean containsTechnicalTerms(String content) {
     List<String> technicalTerms = new List<String>{
-        'software', 'hardware', 'system', 'database', 'server', 'network', 
-        'security', 'encryption', 'api', 'integration', 'technical'
+        'software', 'hardware', 'system', 'database', 'server', 
+        'network', 'security', 'encryption', 'api', 'integration', 'technical'
     };
     String lowerContent = content.toLowerCase();
     for (String term : technicalTerms) {
@@ -665,8 +647,6 @@ private Boolean containsTechnicalTerms(String content) {
     }
     return false;
 }
-
-// Inner classes
 public class RegulatoryFramework {
     public String code { get; set; }
     public String name { get; set; }
@@ -681,4 +661,3 @@ public class RegulatoryFramework {
 
 // Custom exception class
 public class AnaraException extends Exception {}
-}

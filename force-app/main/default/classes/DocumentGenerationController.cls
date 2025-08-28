@@ -2,34 +2,34 @@ public with sharing class DocumentGenerationController {
     
     @AuraEnabled
     public static String createDocumentRequest(
-        String documentType, 
-        String region, 
-        String role, 
-        String templateId, 
-        String clauseContent
+        String documentType,
+    String region,
+    String role,
+    String templateId,
+    String clauseContent
     ) {
         try {
             // Create document generation request
             DocumentGenerationRequest__c request = new DocumentGenerationRequest__c(
                 DocumentType__c = documentType,
-                Region__c = region,
-                Role__c = role,
-                TemplateId__c = templateId,
-                ClauseContent__c = clauseContent,
-                Status__c = 'Generated',
-                GeneratedDate__c = System.now(),
-                RequestedBy__c = UserInfo.getUserId()
-            );
+            Region__c = region,
+            Role__c = role,
+            TemplateId__c = templateId,
+            ClauseContent__c = clauseContent,
+            Status__c = 'Generated',
+            GeneratedDate__c = System.now(),
+            RequestedBy__c = UserInfo.getUserId()
+                );
             insert request;
             
             // Create audit trail
             AuditTrail__c audit = new AuditTrail__c(
                 Action__c = 'Document Generated',
-                Details__c = 'Document Type: ' + documentType + ', Region: ' + region,
-                Timestamp__c = System.now(),
-                UserId__c = UserInfo.getUserId(),
-                RelatedRecordId__c = request.Id
-            );
+            Details__c = 'Document Type: ' + documentType + ', Region: ' + region,
+            Timestamp__c = System.now(),
+            UserId__c = UserInfo.getUserId(),
+            RelatedRecordId__c = request.Id
+                );
             insert audit;
             
             return request.Id;
@@ -38,6 +38,8 @@ public with sharing class DocumentGenerationController {
             throw new AuraHandledException('Failed to create document: ' + e.getMessage());
         }
     }
+
+
         @AuraEnabled
     public static String createDocumentRequest(
         String documentType, 
@@ -76,9 +78,12 @@ public with sharing class DocumentGenerationController {
         }
     }
 
-
+    
     @AuraEnabled(cacheable=true)
-    public static List<Map<String, Object>> getAvailableTemplates(String documentType, String region) {
+    public static List<DocumentTemplate__c> getAvailableTemplates(String documentType, String region) {
+
+
+           
         try {
             List<Map<String, Object>> templates = new List<Map<String, Object>>();
             
@@ -118,8 +123,16 @@ public with sharing class DocumentGenerationController {
         } catch (Exception e) {
             throw new AuraHandledException('Failed to retrieve templates: ' + e.getMessage());
         }
-    }
+    
 
+        // return [
+        //     SELECT Id, Name, Description__c, DocumentType__c, Region__c 
+        //     FROM DocumentTemplate__c 
+        //     WHERE DocumentType__c = :documentType 
+        //     AND Region__c = :region 
+        //     AND IsActive__c = true
+        // ];
+    }
     
     @AuraEnabled(cacheable=true)
     public static DocumentGenerationRequest__c getDocumentRequest(String requestId) {
@@ -131,7 +144,7 @@ public with sharing class DocumentGenerationController {
             LIMIT 1
         ];
     }
-        private static void createDocumentAudit(String documentId, String action) {
+    private static void createDocumentAudit(String documentId, String action) {
         AuditTrail__c audit = new AuditTrail__c(
             Action__c = action,
             RelatedRecordId__c = documentId,
