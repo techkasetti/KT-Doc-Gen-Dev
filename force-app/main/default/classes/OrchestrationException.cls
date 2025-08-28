@@ -1,0 +1,1 @@
+public class OrchestrationException extends Exception {}

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    
+    <apiVersion>59.0</apiVersion>
+    <isExposed>true</isExposed>
+    
+    <!-- Supported Targets -->
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__HomePage</target>
+        <target>lightning__Tab</target>
+        <target>lightningCommunity__Page</target>
+    </targets>
+
+    <!-- Target Configurations -->
+    <targetConfigs>
+        
+        <!-- App & Home Page Configuration -->
+        <targetConfig targets="lightning__AppPage,lightning__HomePage">
+            <property 
+                name="showHeader" 
+                type="Boolean" 
+                default="true" 
+                label="Show Component Header"/>
+            
+            <property 
+                name="defaultAIModel" 
+                type="String" 
+                default="" 
+                label="Default AI Model"/>
+            
+            <property 
+                name="allowModelSelection" 
+                type="Boolean" 
+                default="true" 
+                label="Allow Users to Select AI Model"/>
+            
+            <property 
+                name="maxDocuments" 
+                type="Integer" 
+                default="50" 
+                label="Maximum Documents for Analysis"/>
+            
+            <property 
+                name="enableAdvancedFeatures" 
+                type="Boolean" 
+                default="true" 
+                label="Enable Advanced Features"/>
+        </targetConfig>
+
+        <!-- Record Page Configuration -->
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>Account</object>
+                <object>Contact</object>
+                <object>Opportunity</object>
+                <object>Case</object>
+                <object>Document_Generation_Request__c</object>
+            </objects>
+            
+            <property 
+                name="contextObject" 
+                type="String" 
+                default="Account" 
+                label="Context Object"/>
+            
+            <property 
+                name="relatedListFields" 
+                type="String" 
+                default="Name,Type,Status" 
+                label="Related List Fields"/>
+        </targetConfig>
+
+    </targetConfigs>
+
+    <!-- Component Metadata -->
+    <masterLabel>Context-Aware Document Generator</masterLabel>
+    <description>
+        Advanced AI-powered document generation with Anara-style 
+        context analysis and multi-document reasoning capabilities
+    </description>
+
+</LightningComponentBundle>
+
+<!-- <?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>58.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Context-Aware Document Generator</masterLabel>
+    <description>AI-powered document generator with folder context analysis and multi-model support</description>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__Tab</target>
+        <target>lightningCommunity__Page</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>DocumentLifecycleConfiguration__c</object>
+                <object>AI_Model_Configuration__c</object>
+                <object>Folder__c</object>
+            </objects>
+            <supportedFormFactors>
+                <supportedFormFactor type="Large"/>
+                <supportedFormFactor type="Small"/>
+            </supportedFormFactors>
+        </targetConfig>
+        <targetConfig targets="lightning__AppPage,lightning__HomePage">
+            <property name="folderId" type="String" label="Folder ID" description="ID of the folder to analyze"/>
+            <property name="selectedAIModel" type="String" label="Default AI Model" description="Pre-selected AI model"/>
+            <property name="maxDocuments" type="Integer" label="Max Documents" description="Maximum documents to analyze" default="50"/>
+            <property name="showAdvancedOptions" type="Boolean" label="Show Advanced Options" description="Display advanced configuration options" default="false"/>
+            <supportedFormFactors>
+                <supportedFormFactor type="Large"/>
+                <supportedFormFactor type="Small"/>
+            </supportedFormFactors>
+        </targetConfig>
+        <targetConfig targets="lightningCommunity__Page">
+            <property name="communityFolderId" type="String" label="Community Folder ID"/>
+            <property name="allowGuestAccess" type="Boolean" label="Allow Guest Access" default="false"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle> -->
