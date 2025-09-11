@@ -83,11 +83,7 @@ public class ComplianceWorkflowOrchestrator {
         Decimal score = 75.0; // Base score
         
         // Check version control setup
-        Integer versionControlSetup = [
-            SELECT COUNT() 
-            FROM DocumentVersionTree__c 
-            WHERE Document_Master_Id__c = :documentId
-        ];
+        Integer versionControlSetup = [SELECT COUNT() FROM DocumentVersionTree__c WHERE Document_Master_Id__c = :documentId];
         if (versionControlSetup > 0) score += 5.0;
         
         // Check retention policy assignment
@@ -99,11 +95,7 @@ public class ComplianceWorkflowOrchestrator {
         if (expirationPolicies > 0) score += 5.0;
         
         // Check collaborative features
-        Integer collaborativeSessions = [
-            SELECT COUNT() 
-            FROM CollaborativeSession__c 
-            WHERE Document__c = :documentId
-        ];
+        Integer collaborativeSessions = [SELECT COUNT() FROM CollaborativeSession__c WHERE Document__c = :documentId];
         if (collaborativeSessions > 0) score += 10.0;
         
         return score;
@@ -118,12 +110,7 @@ public class ComplianceWorkflowOrchestrator {
     
     private static void notifyComplianceStakeholders(String documentId, ComplianceAuditTrail__c auditTrail) {
         
-        ContentDocument document = [
-            SELECT Title 
-            FROM ContentDocument 
-            WHERE Id = :documentId 
-            LIMIT 1
-        ];
+        ContentDocument document = [SELECT Title FROM ContentDocument WHERE Id = :documentId LIMIT 1];
         
         List<String> recipients = new List<String>{
             'compliance@company.com',
@@ -163,3 +150,4 @@ public class ComplianceWorkflowOrchestrator {
         );
     }
 }
+

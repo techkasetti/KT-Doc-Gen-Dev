@@ -1,4 +1,3 @@
-// Document Lifecycle Orchestration Engine
 public class DocumentLifecycleOrchestrator {
     
     public static OrchestrationResult executeFullLifecycleOrchestration(Id documentId) {
@@ -35,7 +34,7 @@ public class DocumentLifecycleOrchestrator {
             
             System.debug('Document lifecycle orchestration completed successfully for: ' + documentId);
             
-            //I'll continue from the catch block and complete the Document Lifecycle Orchestration Engine and the overall Document Lifecycle Management system.
+        I'll continue from the catch block and complete the Document Lifecycle Orchestration Engine and the overall Document Lifecycle Management system.
         } catch (Exception e) {
             result.success = false;
             result.errorMessage = e.getMessage();
@@ -366,76 +365,450 @@ public class DocumentLifecycleOrchestrator {
         return EncodingUtil.convertToHex(Crypto.generateDigest('SHA-256', Blob.valueOf(hashInput)));
     }
     
-    //I'll continue from the createBlockchainAnchor method and complete the Document Lifecycle Management system.
-    private static String createBlockchainAnchor(Id documentId, OrchestrationResult result) {
+I'll continue from the createBlockchainAnchor method and complete the Document Lifecycle Management system.
+private static String createBlockchainAnchor(Id documentId, OrchestrationResult result) {
+    try {
+        // Create blockchain anchor for immutable audit trail
+        Map<String, Object> blockchainPayload = new Map<String, Object>{
+            'document_id' => documentId,
+            'orchestration_id' => result.auditTrailId,
+            'timestamp' => result.orchestrationStartTime.getTime(),
+            'final_status' => result.orchestrationStatus,
+            'compliance_score' => result.complianceScore,
+            'phases_executed' => result.phaseResults.size(),
+            'audit_hash' => generateAuditHash(result),
+            'org_id' => UserInfo.getOrganizationId()
+        };
+        
+        // Create immutable blockchain record using existing BlockchainAuditManager
+        BlockchainAuditManager.createImmutableAuditRecord(
+            documentId,
+            'LIFECYCLE_ORCHESTRATION_COMPLETED',
+            'Full document lifecycle orchestration completed with status: ' + result.orchestrationStatus
+        );
+        
+        String blockchainHash = EncodingUtil.convertToHex(
+            Crypto.generateDigest('SHA-256', Blob.valueOf(JSON.serialize(blockchainPayload)))
+        );
+        
+        return blockchainHash;
+    } catch (Exception e) {
+        System.debug(LoggingLevel.ERROR, 'Blockchain anchoring failed: ' + e.getMessage());
+        return 'BLOCKCHAIN_ANCHOR_FAILED';
+    }
+}
+
+private static void sendOrchestrationCompletionNotification(Id documentId, OrchestrationResult result) {
+    try {
+        // Get document details
+        ContentDocument doc = [
+            SELECT Id, Title, CreatedById, CreatedDate 
+            FROM ContentDocument 
+            WHERE Id = :documentId 
+            LIMIT 1
+        ];
+        
+        // Prepare notification details
+        Map<String, Object> notificationData = new Map<String, Object>{
+            'documentTitle' => doc.Title,
+            'documentId' => documentId,
+            'orchestrationStatus' => result.orchestrationStatus,
+            'complianceScore' => result.complianceScore,
+            'processingTime' => result.totalOrchestrationTime,
+            'successfulPhases' => countSuccessfulPhases(result.phaseResults),
+            'totalPhases' => result.phaseResults.size(),
+            'riskLevel' => calculateOverallRiskLevel(result)
+        };
+        
+        // Send notification to document owner
+        insert new DocumentLifecycleNotification__c(
+            Document_Id__c = documentId,
+            Recipient_Id__c = doc.CreatedById,
+            Notification_Type__c = 'ORCHESTRATION_COMPLETION',
+            Subject__c = 'Document Lifecycle Processing Complete: ' + doc.Title,
+            Message__c = generateCompletionMessage(notificationData),
+            Notification_Data__c = JSON.serialize(notificationData),
+            Status__c = 'PENDING',
+            Priority__c = result.orchestrationStatus == 'FAILED' ? 'HIGH' : 'MEDIUM',
+            Created_Date__c = DateTime.now()
+        );
+        
+    } catch (Exception e) {
+        System.debug(LoggingLevel.ERROR, 'Failed to send orchestration notification: ' + e.getMessage());
+    }
+}
+
+// Advanced monitoring and alerting system
+public class DocumentLifecycleMonitoringSystem {
+    
+    // Scheduled monitoring job
+    @future(callout=false)
+    public static void executeScheduledMonitoring() {
         try {
-            // Create blockchain anchor for immutable audit trail
-            Map<String, Object> blockchainPayload = new Map<String, Object>{
-                'document_id' => documentId,
-                'orchestration_id' => result.auditTrailId,
-                'timestamp' => result.orchestrationStartTime.getTime(),
-                'final_status' => result.orchestrationStatus,
-                'compliance_score' => result.complianceScore,
-                'phases_executed' => result.phaseResults.size(),
-                'audit_hash' => generateAuditHash(result),
-                'org_id' => UserInfo.getOrganizationId()
-            };
+            // Monitor expiring documents
+            monitorExpiringDocuments();
             
-            // Create immutable blockchain record using existing BlockchainAuditManager
-            BlockchainAuditManager.createImmutableAuditRecord(
-                documentId,
-                'LIFECYCLE_ORCHESTRATION_COMPLETED',
-                'Full document lifecycle orchestration completed with status: ' + result.orchestrationStatus
-            );
+            // Monitor retention compliance
+            monitorRetentionCompliance();
             
-            String blockchainHash = EncodingUtil.convertToHex(
-                Crypto.generateDigest('SHA-256', Blob.valueOf(JSON.serialize(blockchainPayload)))
-            );
+            // Monitor AI processing health
+            monitorAIProcessingHealth();
             
-            return blockchainHash;
+            // Monitor system performance
+            monitorSystemPerformance();
+            
+            // Generate daily summary report
+            generateDailySummaryReport();
+            
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Blockchain anchoring failed: ' + e.getMessage());
-            return 'BLOCKCHAIN_ANCHOR_FAILED';
+            System.debug(LoggingLevel.ERROR, 'Scheduled monitoring failed: ' + e.getMessage());
+            createSystemAlert('MONITORING_SYSTEM_FAILURE', e.getMessage(), 'CRITICAL');
         }
     }
     
-    private static void sendOrchestrationCompletionNotification(Id documentId, OrchestrationResult result) {
-        try {
-            // Get document details
-            ContentDocument doc = [
-                SELECT Id, Title, CreatedById, CreatedDate 
-                FROM ContentDocument 
-                WHERE Id = :documentId 
-                LIMIT 1
-            ];
-            
-            // Prepare notification details
-            Map<String, Object> notificationData = new Map<String, Object>{
-                'documentTitle' => doc.Title,
-                'documentId' => documentId,
-                'orchestrationStatus' => result.orchestrationStatus,
-                'complianceScore' => result.complianceScore,
-                'processingTime' => result.totalOrchestrationTime,
-                'successfulPhases' => countSuccessfulPhases(result.phaseResults),
-                'totalPhases' => result.phaseResults.size(),
-                'riskLevel' => calculateOverallRiskLevel(result)
-            };
-            
-            // Send notification to document owner
-            insert new DocumentLifecycleNotification__c(
-                Document_Id__c = documentId,
-                Recipient_Id__c = doc.CreatedById,
-                Notification_Type__c = 'ORCHESTRATION_COMPLETION',
-                Subject__c = 'Document Lifecycle Processing Complete: ' + doc.Title,
-                Message__c = generateCompletionMessage(notificationData),
-                Notification_Data__c = JSON.serialize(notificationData),
-                Status__c = 'PENDING',
-                Priority__c = result.orchestrationStatus == 'FAILED' ? 'HIGH' : 'MEDIUM',
-                Created_Date__c = DateTime.now()
+    private static void monitorExpiringDocuments() {
+        // Find documents expiring within next 30 days
+        List<DocumentExpirationTracking__c> expiringDocs = [
+            SELECT Document_Id__c, Days_Until_Expiration__c, Expiration_Status__c
+            FROM DocumentExpirationTracking__c
+            WHERE Days_Until_Expiration__c <= 30
+            AND Days_Until_Expiration__c > 0
+            AND Expiration_Status__c != 'EXPIRED'
+        ];
+        
+        for (DocumentExpirationTracking__c doc : expiringDocs) {
+            if (doc.Days_Until_Expiration__c <= 7) {
+                createSystemAlert(
+                    'DOCUMENT_EXPIRING_SOON',
+                    'Document expiring in ' + doc.Days_Until_Expiration__c + ' days',
+                    'HIGH'
+                );
+            } else if (doc.Days_Until_Expiration__c <= 30) {
+                createSystemAlert(
+                    'DOCUMENT_EXPIRING',
+                    'Document expiring in ' + doc.Days_Until_Expiration__c + ' days',
+                    'MEDIUM'
+                );
+            }
+        }
+    }
+    
+    private static void monitorRetentionCompliance() {
+        // Find documents with retention violations
+        List<DocumentRetentionSchedule__c> violatingDocs = [
+            SELECT Document_Id__c, Retention_End_Date__c, Status__c
+            FROM DocumentRetentionSchedule__c
+            WHERE Retention_End_Date__c <= TODAY
+            AND Status__c = 'ACTIVE'
+        ];
+        
+        for (DocumentRetentionSchedule__c doc : violatingDocs) {
+            Integer daysOverdue = doc.Retention_End_Date__c.daysBetween(Date.today());
+            createSystemAlert(
+                'RETENTION_VIOLATION',
+                'Document retention period exceeded by ' + daysOverdue + ' days',
+                daysOverdue > 30 ? 'CRITICAL' : 'HIGH'
             );
+        }
+    }
+    
+    private static void createSystemAlert(String alertType, String message, String priority) {
+        insert new SystemAlert__c(
+            Alert_Type__c = alertType,
+            Alert_Message__c = message,
+            Priority__c = priority,
+            Status__c = 'ACTIVE',
+            Created_Date__c = DateTime.now(),
+            Requires_Action__c = true
+        );
+    }
+}
+
+// Document lifecycle reporting and analytics
+public class DocumentLifecycleReporting {
+    
+    public static DocumentLifecycleDashboard generateDashboard(String timeframe) {
+        DocumentLifecycleDashboard dashboard = new DocumentLifecycleDashboard();
+        dashboard.generatedAt = DateTime.now();
+        dashboard.timeframe = timeframe;
+        
+        try {
+            // Overall statistics
+            dashboard.totalDocuments = getTotalDocumentCount();
+            dashboard.activeDocuments = getActiveDocumentCount();
+            dashboard.expiredDocuments = getExpiredDocumentCount();
+            dashboard.archivedDocuments = getArchivedDocumentCount();
+            
+            // Compliance metrics
+            dashboard.complianceMetrics = generateComplianceMetrics(timeframe);
+            
+            // AI processing metrics
+            dashboard.aiMetrics = generateAIMetrics(timeframe);
+            
+            // Performance metrics
+            dashboard.performanceMetrics = generatePerformanceMetrics(timeframe);
+            
+            // Risk assessment summary
+            dashboard.riskSummary = generateRiskSummary();
+            
+            // Trending analysis
+            dashboard.trends = generateTrendAnalysis(timeframe);
+            
+            dashboard.success = true;
             
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Failed to send orchestration notification: ' + e.getMessage());
+            dashboard.success = false;
+            dashboard.errorMessage = e.getMessage();
+        }
+        
+        return dashboard;
+    }
+    
+    private static ComplianceMetrics generateComplianceMetrics(String timeframe) {
+        ComplianceMetrics metrics = new ComplianceMetrics();
+        
+        // Calculate compliance score distribution
+        List<AggregateResult> complianceScores = [
+            SELECT AVG(Final_Compliance_Score__c) avgScore,
+                   MIN(Final_Compliance_Score__c) minScore,
+                   MAX(Final_Compliance_Score__c) maxScore,
+                   COUNT(Id) totalDocs
+            FROM DocumentComprehensiveAudit__c
+            WHERE CreatedDate = LAST_N_DAYS:30
+        ];
+        
+        if (!complianceScores.isEmpty()) {
+            AggregateResult result = complianceScores[0];
+            metrics.averageComplianceScore = (Decimal) result.get('avgScore');
+            metrics.minimumComplianceScore = (Decimal) result.get('minScore');
+            metrics.maximumComplianceScore = (Decimal) result.get('maxScore');
+            metrics.totalDocumentsAssessed = (Integer) result.get('totalDocs');
+        }
+        
+        // Count violations by type
+        List<AggregateResult> violations = [
+            SELECT Regulation__c, COUNT(Id) violationCount
+            FROM DocumentComplianceFinding__c
+            WHERE CreatedDate = LAST_N_DAYS:30
+            AND Severity__c IN ('HIGH', 'CRITICAL')
+            GROUP BY Regulation__c
+        ];
+        
+        metrics.violationsByRegulation = new Map<String, Integer>();
+        for (AggregateResult violation : violations) {
+            metrics.violationsByRegulation.put(
+                (String) violation.get('Regulation__c'),
+                (Integer) violation.get('violationCount')
+            );
+        }
+        
+        return metrics;
+    }
+}
+
+// Complete system integration wrapper
+public class DocumentLifecycleSystemIntegrator {
+    
+    @InvocableMethod(label='Execute Complete Document Lifecycle Management' description='Executes comprehensive document lifecycle management for specified documents')
+    public static List<DocumentLifecycleResult> executeCompleteLifecycleManagement(List<DocumentLifecycleRequest> requests) {
+        List<DocumentLifecycleResult> results = new List<DocumentLifecycleResult>();
+        
+        for (DocumentLifecycleRequest request : requests) {
+            DocumentLifecycleResult result = new DocumentLifecycleResult();
+            result.documentId = request.documentId;
+            result.requestId = request.requestId;
+            result.startTime = DateTime.now();
+            
+            try {
+                // Execute orchestration
+                OrchestrationResult orchestrationResult = DocumentLifecycleOrchestrator.executeFullLifecycleOrchestration(request.documentId);
+                
+                // Map orchestration result to lifecycle result
+                result.success = orchestrationResult.success;
+                result.orchestrationStatus = orchestrationResult.orchestrationStatus;
+                result.complianceScore = orchestrationResult.complianceScore;
+                result.processingTime = orchestrationResult.totalOrchestrationTime;
+                result.phasesExecuted = orchestrationResult.phaseResults.size();
+                result.successfulPhases = countSuccessfulPhases(orchestrationResult.phaseResults);
+                result.failedPhases = countFailedPhases(orchestrationResult.phaseResults);
+                result.auditTrailId = orchestrationResult.auditTrailId;
+                result.errorMessage = orchestrationResult.errorMessage;
+                
+                // Execute additional integrations if requested
+                if (request.enableAdvancedAnalytics) {
+                    executeAdvancedAnalytics(request.documentId, result);
+                }
+                
+                if (request.enableRealTimeMonitoring) {
+                    enableRealTimeMonitoring(request.documentId, result);
+                }
+                
+                if (request.generateComprehensiveReport) {
+                    generateComprehensiveReport(request.documentId, result);
+                }
+                
+            } catch (Exception e) {
+                result.success = false;
+                result.errorMessage = e.getMessage();
+                result.stackTrace = e.getStackTraceString();
+            }
+            
+            result.endTime = DateTime.now();
+            result.totalExecutionTime = result.endTime.getTime() - result.startTime.getTime();
+            
+            results.add(result);
+        }
+        
+        return results;
+    }
+    
+    private static void executeAdvancedAnalytics(Id documentId, DocumentLifecycleResult result) {
+        try {
+            // Execute advanced analytics
+            DocumentAnalyticsEngine.enhanceDocumentIntelligence(new Set<Id>{documentId});
+            result.advancedAnalyticsEnabled = true;
+        } catch (Exception e) {
+            result.analyticsError = e.getMessage();
+        }
+    }
+    
+    private static void enableRealTimeMonitoring(Id documentId, DocumentLifecycleResult result) {
+        try {
+            // Enable real-time monitoring
+            insert new DocumentRealTimeMonitoring__c(
+                Document_Id__c = documentId,
+                Monitoring_Enabled__c = true,
+                Alert_Threshold__c = 'MEDIUM',
+                Notification_Frequency__c = 'DAILY',
+                Last_Check__c = DateTime.now(),
+                Status__c = 'ACTIVE'
+            );
+            result.realTimeMonitoringEnabled = true;
+        } catch (Exception e) {
+            result.monitoringError = e.getMessage();
         }
     }
 }
+
+// Supporting classes and data structures
+public class OrchestrationResult {
+    public Id documentId;
+    public DateTime orchestrationStartTime;
+    public DateTime orchestrationEndTime;
+    public Long totalOrchestrationTime;
+    public String orchestrationStatus;
+    public Boolean success;
+    public String errorMessage;
+    public String stackTrace;
+    public String currentPhase;
+    public List<PhaseResult> phaseResults = new List<PhaseResult>();
+    public Id lifecycleTrackingId;
+    public Id versionTreeId;
+    public Id retentionScheduleId;
+    public Id expirationPolicyId;
+    public Id aiEnhancementId;
+    public Id auditTrailId;
+    public Decimal complianceScore;
+    public Decimal aiConfidenceScore;
+    public Integer complianceViolations;
+    public List<String> complianceRecommendations;
+}
+
+public class PhaseResult {
+    public String phaseName;
+    public String status;
+    public String message;
+    public DateTime executionTime;
+    
+    public PhaseResult(String phaseName, String status, String message) {
+        this.phaseName = phaseName;
+        this.status = status;
+        this.message = message;
+        this.executionTime = DateTime.now();
+    }
+}
+public class DocumentLifecycleRequest {
+    @InvocableVariable(required=true)
+    public Id documentId;
+    
+    @InvocableVariable(required=false)
+    public String requestId;
+    
+    @InvocableVariable(required=false)
+    public Boolean enableAdvancedAnalytics = false;
+    
+    @InvocableVariable(required=false)
+    public Boolean enableRealTimeMonitoring = false;
+    
+    @InvocableVariable(required=false)
+    public Boolean generateComprehensiveReport = false;
+}
+
+public class DocumentLifecycleResult {
+    @InvocableVariable
+    public Id documentId;
+    
+    @InvocableVariable
+    public String requestId;
+    
+    @InvocableVariable
+    public Boolean success;
+    
+    @InvocableVariable
+    public String orchestrationStatus;
+    
+    @InvocableVariable
+    public Decimal complianceScore;
+    
+    @InvocableVariable
+    public Long processingTime;
+    
+    @InvocableVariable
+    public Long totalExecutionTime;
+    
+    @InvocableVariable
+    public Integer phasesExecuted;
+    
+    @InvocableVariable
+    public Integer successfulPhases;
+    
+    @InvocableVariable
+    public Integer failedPhases;
+    
+I'll continue from the DocumentLifecycleResult class and complete the Document Lifecycle Management system with all remaining components.
+    @InvocableVariable
+    public Id auditTrailId;
+    
+    @InvocableVariable
+    public String errorMessage;
+    
+    @InvocableVariable
+    public String stackTrace;
+    
+    @InvocableVariable
+    public DateTime startTime;
+    
+    @InvocableVariable
+    public DateTime endTime;
+    
+    @InvocableVariable
+    public Boolean advancedAnalyticsEnabled = false;
+    
+    @InvocableVariable
+    public Boolean realTimeMonitoringEnabled = false;
+    
+    @InvocableVariable
+    public String analyticsError;
+    
+    @InvocableVariable
+    public String monitoringError;
+    
+    @InvocableVariable
+    public String comprehensiveReportId;
+}
+
+// Exception classes for document lifecycle management
+public class DocumentLifecycleException extends Exception {}
+public class OrchestrationException extends Exception {}
+public class AIProcessingException extends Exception {}
+public class ReportingException extends Exception {}

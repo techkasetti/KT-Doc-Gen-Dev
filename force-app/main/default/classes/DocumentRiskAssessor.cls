@@ -127,7 +127,7 @@ public class DocumentRiskAssessor {
         List<SystemDowntime__c> downtimeRecords = [
             SELECT Id FROM SystemDowntime__c 
             WHERE CreatedDate >= :DateTime.now().addDays(-7)
-            AND Impact__c INCLUDES ('DOCUMENT_ACCESS')
+            AND Impact__c INCLUDES 'DOCUMENT_ACCESS'
         ];
         if (!downtimeRecords.isEmpty()) {
             riskScore += 25;
@@ -349,111 +349,112 @@ public class DocumentRiskAssessor {
             factors.add('Privacy protection deficiencies');
         }
         if (result.reputationalRiskScore > 50) {
-            factors.add('Reputational exposure concerns');
-        }
-        if (result.financialRiskScore > 50) {
-            factors.add('Financial liability risks');
-        }
-        
-        // Specific risk factors based on document characteristics
-        if (analysis.Sensitivity_Level__c == 'CRITICAL') {
-            factors.add('Critical sensitivity classification');
-        }
-        
-        if (analysis.Document_Type__c == 'LEGAL_CONTRACT') {
-            factors.add('Legal contractual obligations');
-        }
-        
-        List<String> topics = analysis.Key_Topics__c != null ? analysis.Key_Topics__c.split(';') : new List<String>();
-        if (topics.contains('PERSONAL_DATA')) {
-            factors.add('Personal data processing');
-        }
-        if (topics.contains('BIOMETRIC')) {
-            factors.add('Biometric data handling');
-        }
-        if (topics.contains('FINANCIAL')) {
-            factors.add('Financial information exposure');
-        }
-        
-        return factors;
-    }
-    
-    private static List<String> generateMitigationRecommendations(RiskAssessmentResult result) {
-        List<String> recommendations = new List<String>();
-        
-        // Security-specific recommendations
-        if (result.securityRiskScore > 50) {
-            recommendations.add('Implement advanced encryption protocols (AES-256)');
-            recommendations.add('Enable multi-factor authentication for document access');
-            recommendations.add('Configure automated tamper detection systems');
-            recommendations.add('Establish regular security audits and penetration testing');
-        }
-        
-        // Compliance-specific recommendations
-        if (result.complianceRiskScore > 50) {
-            recommendations.add('Conduct comprehensive regulatory compliance assessment');
-            recommendations.add('Implement automated compliance monitoring');
-            recommendations.add('Establish regular compliance training programs');
-            recommendations.add('Create compliance violation response procedures');
-        }
-        
-        // Privacy-specific recommendations
-        if (result.privacyRiskScore > 50) {
-            recommendations.add('Implement data minimization principles');
-            recommendations.add('Establish consent management processes');
-            recommendations.add('Configure data retention and deletion policies');
-            recommendations.add('Implement privacy-by-design frameworks');
-        }
-        
-        // Operational recommendations
-        if (result.operationalRiskScore > 50) {
-            recommendations.add('Establish robust backup and recovery procedures');
-            recommendations.add('Implement document version control systems');
-            recommendations.add('Create disaster recovery and business continuity plans');
-            recommendations.add('Establish clear collaboration and access protocols');
-        }
-        
-        // General recommendations for high overall risk
-        if (result.overallRiskScore > 70) {
-            recommendations.add('Conduct immediate comprehensive risk assessment');
-            recommendations.add('Engage external security and compliance consultants');
-            recommendations.add('Implement executive-level risk governance');
-            recommendations.add('Create detailed incident response procedures');
-        }
-        
-        return recommendations;
-    }
-    
-    private static DocumentSecurityConfig__c getSecurityConfig(String documentId) {
-        try {
-            return [
-                SELECT Encryption_Enabled__c, Encryption_Type__c
-                FROM DocumentSecurityConfig__c 
-                WHERE Document__c = :documentId 
-                AND Status__c = 'ACTIVE' 
-                LIMIT 1
-            ];
-        } catch (QueryException e) {
-            return null;
-        }
-    }
-    public class RiskAssessmentResult {
-        public Decimal securityRiskScore;
-        public Decimal complianceRiskScore;
-        public Decimal operationalRiskScore;
-        public Decimal privacyRiskScore;
-        public Decimal reputationalRiskScore;
-        public Decimal financialRiskScore;
-        public Decimal overallRiskScore;
-        public String riskLevel;
-        public List<String> riskFactors;
-        public List<String> mitigationRecommendations;
-        public String assessmentError;
-        
-        public RiskAssessmentResult() {
-            this.riskFactors = new List<String>();
-            this.mitigationRecommendations = new List<String>();
-        }
-    }
-
+    factors.add('Reputational exposure concerns');
 }
+if (result.financialRiskScore > 50) {
+    factors.add('Financial liability risks');
+}
+
+// Specific risk factors based on document characteristics
+if (analysis.Sensitivity_Level__c == 'CRITICAL') {
+    factors.add('Critical sensitivity classification');
+}
+
+if (analysis.Document_Type__c == 'LEGAL_CONTRACT') {
+    factors.add('Legal contractual obligations');
+}
+
+List<String> topics = analysis.Key_Topics__c != null ? analysis.Key_Topics__c.split(';') : new List<String>();
+if (topics.contains('PERSONAL_DATA')) {
+    factors.add('Personal data processing');
+}
+if (topics.contains('BIOMETRIC')) {
+    factors.add('Biometric data handling');
+}
+if (topics.contains('FINANCIAL')) {
+    factors.add('Financial information exposure');
+}
+
+return factors;
+}
+
+private static List<String> generateMitigationRecommendations(RiskAssessmentResult result) {
+    List<String> recommendations = new List<String>();
+    
+    // Security-specific recommendations
+    if (result.securityRiskScore > 50) {
+        recommendations.add('Implement advanced encryption protocols (AES-256)');
+        recommendations.add('Enable multi-factor authentication for document access');
+        recommendations.add('Configure automated tamper detection systems');
+        recommendations.add('Establish regular security audits and penetration testing');
+    }
+    
+    // Compliance-specific recommendations
+    if (result.complianceRiskScore > 50) {
+        recommendations.add('Conduct comprehensive regulatory compliance assessment');
+        recommendations.add('Implement automated compliance monitoring');
+        recommendations.add('Establish regular compliance training programs');
+        recommendations.add('Create compliance violation response procedures');
+    }
+    
+    // Privacy-specific recommendations
+    if (result.privacyRiskScore > 50) {
+        recommendations.add('Implement data minimization principles');
+        recommendations.add('Establish consent management processes');
+        recommendations.add('Configure data retention and deletion policies');
+        recommendations.add('Implement privacy-by-design frameworks');
+    }
+    
+    // Operational recommendations
+    if (result.operationalRiskScore > 50) {
+        recommendations.add('Establish robust backup and recovery procedures');
+        recommendations.add('Implement document version control systems');
+        recommendations.add('Create disaster recovery and business continuity plans');
+        recommendations.add('Establish clear collaboration and access protocols');
+    }
+    
+    // General recommendations for high overall risk
+    if (result.overallRiskScore > 70) {
+        recommendations.add('Conduct immediate comprehensive risk assessment');
+        recommendations.add('Engage external security and compliance consultants');
+        recommendations.add('Implement executive-level risk governance');
+        recommendations.add('Create detailed incident response procedures');
+    }
+    
+    return recommendations;
+}
+
+private static DocumentSecurityConfig__c getSecurityConfig(String documentId) {
+    try {
+        return [
+            SELECT Encryption_Enabled__c, Encryption_Type__c
+            FROM DocumentSecurityConfig__c 
+            WHERE Document__c = :documentId 
+            AND Status__c = 'ACTIVE' 
+            LIMIT 1
+        ];
+    } catch (QueryException e) {
+        return null;
+    }
+}
+
+public class RiskAssessmentResult {
+    public Decimal securityRiskScore;
+    public Decimal complianceRiskScore;
+    public Decimal operationalRiskScore;
+    public Decimal privacyRiskScore;
+    public Decimal reputationalRiskScore;
+    public Decimal financialRiskScore;
+    public Decimal overallRiskScore;
+    public String riskLevel;
+    public List<String> riskFactors;
+    public List<String> mitigationRecommendations;
+    public String assessmentError;
+    
+    public RiskAssessmentResult() {
+        this.riskFactors = new List<String>();
+        this.mitigationRecommendations = new List<String>();
+    }
+}
+}
+

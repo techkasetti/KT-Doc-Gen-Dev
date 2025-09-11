@@ -1,10 +1,6 @@
-// ===================================
-// ADVANCED AI INTEGRATION ENGINE
-// ===================================
-
 public class AdvancedAIIntegrationEngine {
     
-    // Main AI orchestration method
+    // Main AI orchestration method leveraging Snowflake + Salesforce architecture
     public static AIProcessingResult executeAIWorkflow(String documentId, Map<String, Object> aiParameters) {
         AIProcessingResult result = new AIProcessingResult();
         result.documentId = documentId;
@@ -12,13 +8,13 @@ public class AdvancedAIIntegrationEngine {
         result.aiModules = new List<AIModuleResult>();
         
         try {
-            // Execute AI modules in sequence
-            result.aiModules.add(executeSemanticAnalysis(documentId, aiParameters));
-            result.aiModules.add(executeIntelligentClassification(documentId, aiParameters));
+            // Execute AI modules in sequence based on DocGen architecture
+            result.aiModules.add(executeVectorEmbeddingAnalysis(documentId, aiParameters));
+            result.aiModules.add(executeAgenticReasoningAnalysis(documentId, aiParameters));
+            result.aiModules.add(executeMultimodalProcessing(documentId, aiParameters));
+            result.aiModules.add(executeSemanticSearchAnalysis(documentId, aiParameters));
             result.aiModules.add(executeComplianceIntelligence(documentId, aiParameters));
-            result.aiModules.add(executeAnomalyDetection(documentId, aiParameters));
-            result.aiModules.add(executePredictiveInsights(documentId, aiParameters));
-            result.aiModules.add(executeNaturalLanguageProcessing(documentId, aiParameters));
+            result.aiModules.add(executeDocumentGraphAnalysis(documentId, aiParameters));
             result.aiModules.add(executeContextualRecommendations(documentId, aiParameters));
             
             result.processingEndTime = DateTime.now();
@@ -26,7 +22,7 @@ public class AdvancedAIIntegrationEngine {
             result.overallStatus = determineAIProcessingStatus(result.aiModules);
             result.confidenceScore = calculateOverallConfidence(result.aiModules);
             
-            // Store AI processing results
+            // Store AI processing results in Snowflake via Salesforce integration
             storeAIProcessingResults(result);
             
         } catch (Exception e) {
@@ -40,369 +36,7 @@ public class AdvancedAIIntegrationEngine {
         return result;
     }
     
-    private static AIModuleResult executeSemanticAnalysis(String documentId, Map<String, Object> aiParameters) {
-        AIModuleResult moduleResult = new AIModuleResult();
-        moduleResult.moduleName = 'Semantic Analysis';
-        moduleResult.moduleDescription = 'Advanced semantic understanding and entity extraction';
-        moduleResult.startTime = DateTime.now();
-        
-        try {
-            // Get document content for analysis
-            ContentVersion version = [
-                SELECT Title, FileType, VersionData 
-                FROM ContentVersion 
-                WHERE ContentDocumentId = :documentId 
-                AND IsLatest = true 
-                LIMIT 1
-            ];
-            
-            String content = extractDocumentText(version.VersionData, version.FileType);
-            
-            // Perform semantic analysis
-            SemanticAnalysisResult semanticResult = performAdvancedSemanticAnalysis(content, aiParameters);
-            
-            // Store semantic analysis results
-            SemanticAnalysisRecord__c semanticRecord = new SemanticAnalysisRecord__c(
-                Document__c = documentId,
-                Named_Entities__c = String.join(semanticResult.namedEntities, ';'),
-                Key_Concepts__c = String.join(semanticResult.keyConcepts, ';'),
-                Semantic_Categories__c = String.join(semanticResult.semanticCategories, ';'),
-                Topic_Modeling_Results__c = JSON.serialize(semanticResult.topicModelingResults),
-                Sentiment_Score__c = semanticResult.sentimentScore,
-                Emotional_Tone__c = semanticResult.emotionalTone,
-                Readability_Index__c = semanticResult.readabilityIndex,
-                Complexity_Score__c = semanticResult.complexityScore,
-                Language_Detection__c = semanticResult.detectedLanguage,
-                Confidence_Score__c = semanticResult.confidenceScore,
-                Processing_Date__c = DateTime.now(),
-                Analysis_Status__c = 'COMPLETED'
-            );
-            insert semanticRecord;
-            
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = 'SUCCESS';
-            moduleResult.confidenceScore = semanticResult.confidenceScore;
-            moduleResult.output = JSON.serialize(semanticResult);
-            moduleResult.insights = generateSemanticInsights(semanticResult);
-            
-        } catch (Exception e) {
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = 'FAILED';
-            moduleResult.errorMessage = e.getMessage();
-            moduleResult.confidenceScore = 0;
-        }
-        
-        return moduleResult;
-    }
-    
-    private static AIModuleResult executeIntelligentClassification(String documentId, Map<String, Object> aiParameters) {
-        AIModuleResult moduleResult = new AIModuleResult();
-        moduleResult.moduleName = 'Intelligent Classification';
-        moduleResult.moduleDescription = 'AI-powered document classification and categorization';
-        moduleResult.startTime = DateTime.now();
-        
-        try {
-            // Get semantic analysis results for enhanced classification
-            SemanticAnalysisRecord__c semanticData = [
-                SELECT Named_Entities__c, Key_Concepts__c, Semantic_Categories__c, 
-                       Sentiment_Score__c, Complexity_Score__c
-                FROM SemanticAnalysisRecord__c 
-                WHERE Document__c = :documentId 
-                ORDER BY CreatedDate DESC 
-                LIMIT 1
-            ];
-            
-            // Perform intelligent classification
-            ClassificationResult classResult = performIntelligentClassification(documentId, semanticData, aiParameters);
-            
-            // Store classification results
-            IntelligentClassificationRecord__c classRecord = new IntelligentClassificationRecord__c(
-                Document__c = documentId,
-                Primary_Classification__c = classResult.primaryClassification,
-                Secondary_Classifications__c = String.join(classResult.secondaryClassifications, ';'),
-                Industry_Vertical__c = classResult.industryVertical,
-                Document_Purpose__c = classResult.documentPurpose,
-                Sensitivity_Level__c = classResult.sensitivityLevel,
-                Regulatory_Scope__c = String.join(classResult.regulatoryScope, ';'),
-                Risk_Category__c = classResult.riskCategory,
-                Retention_Category__c = classResult.retentionCategory,
-                Access_Level__c = classResult.recommendedAccessLevel,
-                Classification_Confidence__c = classResult.classificationConfidence,
-                Processing_Date__c = DateTime.now(),
-                Classification_Status__c = 'COMPLETED',
-                AI_Model_Version__c = classResult.modelVersion
-            );
-            insert classRecord;
-            
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = 'SUCCESS';
-            moduleResult.confidenceScore = classResult.classificationConfidence;
-            moduleResult.output = JSON.serialize(classResult);
-            moduleResult.insights = generateClassificationInsights(classResult);
-            
-        } catch (Exception e) {
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = 'FAILED';
-            moduleResult.errorMessage = e.getMessage();
-            moduleResult.confidenceScore = 0;
-        }
-        
-        return moduleResult;
-    }
-    
-    // private static AIModuleResult executeComplianceIntelligence(String documentId, Map<String, Object> aiParameters) {
-    //     AIModuleResult moduleResult = new AIModuleResult();
-    //     moduleResult.moduleName = 'Compliance Intelligence';
-    //     moduleResult.moduleDescription = 'AI-powered compliance analysis and prediction';
-    //     moduleResult.startTime = DateTime.now();
-        
-    //     try {
-    //         // Get classification data for compliance analysis
-    //         IntelligentClassificationRecord__c classData = [
-    //             SELECT Primary_Classification__c, Industry_Vertical__c, Regulatory_Scope__c,
-    //                    Sensitivity_Level__c, Risk_Category__c
-    //             FROM IntelligentClassificationRecord__c 
-    //             WHERE Document__c = :documentId 
-    //             ORDER BY CreatedDate DESC 
-    //             LIMIT 1
-    //         ];
-            
-    //         // Perform AI-driven compliance analysis
-    //         ComplianceIntelligenceResult complianceResult = performComplianceIntelligenceAnalysis(
-    //             documentId, classData, aiParameters
-    //         );
-            
-    //         // Store compliance intelligence results
-    //         ComplianceIntelligenceRecord__c complianceRecord = new ComplianceIntelligenceRecord__c(
-    //             Document__c = documentId,
-    //             Applicable_Regulations__c = String.join(complianceResult.applicableRegulations, ';'),
-    //             Compliance_Risk_Score__c = complianceResult.complianceRiskScore,
-    //             Predicted_Violations__c = String.join(complianceResult.predictedViolations, ';'),
-    //             Recommended_Actions__c = String.join(complianceResult.recommendedActions, '\n'),
-    //             Compliance_Confidence__c = complianceResult.confidenceScore,
-    //             Regulatory_Updates_Impact__c = JSON.serialize(complianceResult.regulatoryUpdatesImpact),
-    //             Jurisdiction_Analysis__c = JSON.serialize(complianceResult.jurisdictionAnalysis),
-    //             Data_Processing_Assessment__c = JSON.serialize(complianceResult.dataProcessingAssessment),
-    //             Rights_Impact_Analysis__c = JSON.serialize(complianceResult.rightsImpactAnalysis),
-    //             Processing_Date__c = DateTime.now(),
-    //             Analysis_Status__c = 'COMPLETED',
-    //             AI_Model_Version__c = complianceResult.modelVersion
-    //         );
-    //         insert complianceRecord;
-            
-    //         moduleResult.endTime = DateTime.now();
-    //         moduleResult.status = complianceResult.complianceRiskScore > 80 ? 'WARNING' : 'SUCCESS';
-    //         moduleResult.confidenceScore = complianceResult.confidenceScore;
-    //         moduleResult.output = JSON.serialize(complianceResult);
-    //         moduleResult.insights = generateComplianceInsights(complianceResult);
-            
-    //     } catch (Exception e) {
-    //         moduleResult.endTime = DateTime.now();
-    //         moduleResult.status = 'FAILED';
-    //         moduleResult.errorMessage = e.getMessage();
-    //         moduleResult.confidenceScore = 0;
-    //     }
-        
-    //     return moduleResult;
-    // }
-       private static AIModuleResult executeComplianceIntelligence(String documentId, Map<String, Object> aiParameters) {
-        AIModuleResult moduleResult = new AIModuleResult();
-        moduleResult.moduleName = 'Compliance Intelligence';
-        moduleResult.moduleDescription = 'AI-powered regulatory compliance analysis with real-time updates';
-        moduleResult.startTime = DateTime.now();
-
-        try {
-            // Get existing analysis data for enhanced compliance intelligence
-            Map<String, Object> documentContext = gatherDocumentAnalysisContext(documentId);
-            
-            // Perform AI-driven compliance analysis with regulatory feeds
-            ComplianceIntelligenceResult complianceResult = performEnhancedComplianceAnalysis(
-                documentId, 
-                documentContext, 
-                aiParameters
-            );
-            
-            // Store compliance intelligence results
-            ComplianceIntelligenceRecord__c complianceRecord = new ComplianceIntelligenceRecord__c(
-                Document__c = documentId,
-                Applicable_Regulations__c = String.join(complianceResult.applicableRegulations, ';'),
-                GDPR_Compliance_Score__c = complianceResult.gdprScore,
-                HIPAA_Compliance_Score__c = complianceResult.hipaaScore,
-                SOX_Compliance_Score__c = complianceResult.soxScore,
-                PCI_DSS_Compliance_Score__c = complianceResult.pciDssScore,
-                UIDAI_Compliance_Score__c = complianceResult.uidaiScore,
-                SEBI_Compliance_Score__c = complianceResult.sebiScore,
-                Overall_Compliance_Score__c = complianceResult.overallScore,
-                Risk_Level__c = complianceResult.riskLevel,
-                Violation_Predictions__c = String.join(complianceResult.predictedViolations, ';'),
-                Regulatory_Gaps__c = String.join(complianceResult.regulatoryGaps, ';'),
-                Recommended_Actions__c = String.join(complianceResult.recommendedActions, '\n'),
-                Jurisdiction_Analysis__c = JSON.serialize(complianceResult.jurisdictionAnalysis),
-                Data_Subject_Rights__c = JSON.serialize(complianceResult.dataSubjectRights),
-                Consent_Requirements__c = JSON.serialize(complianceResult.consentRequirements),
-                Retention_Requirements__c = JSON.serialize(complianceResult.retentionRequirements),
-                Cross_Border_Implications__c = JSON.serialize(complianceResult.crossBorderImplications),
-                Audit_Trail_Requirements__c = JSON.serialize(complianceResult.auditRequirements),
-                Compliance_Confidence__c = complianceResult.confidenceScore,
-                Last_Updated_Regulations__c = complianceResult.lastRegulatoryUpdate,
-                Processing_Date__c = DateTime.now(),
-                Analysis_Status__c = 'COMPLETED',
-                AI_Model_Version__c = complianceResult.modelVersion
-            );
-            insert complianceRecord;
-            
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = complianceResult.overallScore < 70 ? 'WARNING' : 'SUCCESS';
-            moduleResult.confidenceScore = complianceResult.confidenceScore;
-            moduleResult.output = JSON.serialize(complianceResult);
-            moduleResult.insights = generateComplianceIntelligenceInsights(complianceResult);
-            
-        } catch (Exception e) {
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = 'FAILED';
-            moduleResult.errorMessage = e.getMessage();
-            moduleResult.confidenceScore = 0;
-        }
-
-        return moduleResult;
-    }
-    private static AIModuleResult executeAnomalyDetection(String documentId, Map<String, Object> aiParameters) {
-        AIModuleResult moduleResult = new AIModuleResult();
-        moduleResult.moduleName = 'Anomaly Detection';
-        moduleResult.moduleDescription = 'AI-powered anomaly and fraud detection';
-        moduleResult.startTime = DateTime.now();
-        
-        try {
-            // Perform anomaly detection analysis
-            AnomalyDetectionResult anomalyResult = performAnomalyDetection(documentId, aiParameters);
-            
-            // Store anomaly detection results
-            AnomalyDetectionRecord__c anomalyRecord = new AnomalyDetectionRecord__c(
-                Document__c = documentId,
-                Anomaly_Score__c = anomalyResult.anomalyScore,
-                Detected_Anomalies__c = String.join(anomalyResult.detectedAnomalies, ';'),
-                Fraud_Risk_Score__c = anomalyResult.fraudRiskScore,
-                Behavioral_Patterns__c = JSON.serialize(anomalyResult.behavioralPatterns),
-                Statistical_Deviations__c = JSON.serialize(anomalyResult.statisticalDeviations),
-                Content_Anomalies__c = JSON.serialize(anomalyResult.contentAnomalies),
-                Access_Pattern_Anomalies__c = JSON.serialize(anomalyResult.accessPatternAnomalies),
-                Temporal_Anomalies__c = JSON.serialize(anomalyResult.temporalAnomalies),
-                Detection_Confidence__c = anomalyResult.confidenceScore,
-                Risk_Level__c = anomalyResult.riskLevel,
-                Recommended_Investigations__c = String.join(anomalyResult.recommendedInvestigations, '\n'),
-                Processing_Date__c = DateTime.now(),
-                Detection_Status__c = 'COMPLETED',
-                AI_Model_Version__c = anomalyResult.modelVersion
-            );
-            
-            if (result.operationalRiskScore > 50) {
-                factors.add('Operational vulnerabilities');
-            }
-            if (result.reputationalRiskScore > 50) {
-                factors.add('Reputational exposure concerns');
-            }
-            if (result.financialRiskScore > 50) {
-                factors.add('Financial liability risks');
-            }
-
-            // Specific risk factors based on document characteristics
-            if (analysis.Sensitivity_Level__c == 'CRITICAL') {
-                factors.add('Critical sensitivity classification');
-            }
-            if (analysis.Document_Type__c == 'LEGAL_CONTRACT') {
-                factors.add('Legal contractual obligations');
-            }
-
-            List<String> topics = analysis.Key_Topics__c != null ? analysis.Key_Topics__c.split(';') : new List<String>();
-            if (topics.contains('PERSONAL_DATA')) {
-                factors.add('Personal data processing');
-            }
-            if (topics.contains('BIOMETRIC')) {
-                factors.add('Biometric data handling');
-            }
-            if (topics.contains('FINANCIAL')) {
-                factors.add('Financial information exposure');
-            }
-
-            return factors;
-        }
-    }
-    private static List<String> generateMitigationRecommendations(RiskAssessmentResult result) {
-        List<String> recommendations = new List<String>();
-            
-            // Security-specific recommendations
-        if (result.securityRiskScore > 50) {
-            recommendations.add('Implement advanced encryption protocols (AES-256)');                
-            recommendations.add('Enable multi-factor authentication for document access');
-            recommendations.add('Configure automated tamper detection systems');
-            recommendations.add('Establish regular security audits and penetration testing');
-        }
-            
-            // Compliance-specific recommendations
-        if (result.complianceRiskScore > 50) {
-            recommendations.add('Conduct comprehensive regulatory compliance assessment');
-            recommendations.add('Implement automated compliance monitoring');
-            recommendations.add('Establish regular compliance training programs');
-            recommendations.add('Create compliance violation response procedures');
-        }
-            
-            // Privacy-specific recommendations
-        if (result.privacyRiskScore > 50) {
-            recommendations.add('Implement data minimization principles');
-            recommendations.add('Establish consent management processes');
-            recommendations.add('Configure data retention and deletion policies');
-            recommendations.add('Implement privacy-by-design frameworks');
-        }
-            
-            // Operational recommendations
-        if (result.operationalRiskScore > 50) {
-            recommendations.add('Establish robust backup and recovery procedures');
-            recommendations.add('Implement document version control systems');
-            recommendations.add('Create disaster recovery and business continuity plans');
-            recommendations.add('Establish clear collaboration and access protocols');
-        }
-            
-            // General recommendations for high overall risk
-        if (result.overallRiskScore > 70) {
-            recommendations.add('Conduct immediate comprehensive risk assessment');
-            recommendations.add('Engage external security and compliance consultants');
-            recommendations.add('Implement executive-level risk governance');
-            recommendations.add('Create detailed incident response procedures');
-        }
-            
-        return recommendations;
-    }
-
-    private static DocumentSecurityConfig__c getSecurityConfig(String documentId) {
-        try {
-            return [
-                SELECT Encryption_Enabled__c, Encryption_Type__c 
-                FROM DocumentSecurityConfig__c 
-                WHERE Document__c = :documentId 
-                AND Status__c = 'ACTIVE' 
-                LIMIT 1
-            ];
-        } catch (QueryException e) {
-            return null;
-        }
-    }
-    public class RiskAssessmentResult {
-        public Decimal securityRiskScore;
-        public Decimal complianceRiskScore;
-        public Decimal operationalRiskScore;
-        public Decimal privacyRiskScore;
-        public Decimal reputationalRiskScore;
-        public Decimal financialRiskScore;
-        public Decimal overallRiskScore;
-        public String riskLevel;
-        public List<String> riskFactors;
-        public List<String> mitigationRecommendations;
-        public String assessmentError;
-        public RiskAssessmentResult() {
-            this.riskFactors = new List<String>();
-            this.mitigationRecommendations = new List<String>();
-        }
-            // Vector embeddings with Snowflake integration as per DocGen architecture
+    // Vector embeddings with Snowflake integration as per DocGen architecture
     private static AIModuleResult executeVectorEmbeddingAnalysis(String documentId, Map<String, Object> aiParameters) {
         AIModuleResult moduleResult = new AIModuleResult();
         moduleResult.moduleName = 'Vector Embedding Analysis';
@@ -454,8 +88,8 @@ public class AdvancedAIIntegrationEngine {
         
         return moduleResult;
     }
-    }
-        // Agentic document reasoning with Snowpark integration
+    
+    // Agentic document reasoning with Snowpark integration
     private static AIModuleResult executeAgenticReasoningAnalysis(String documentId, Map<String, Object> aiParameters) {
         AIModuleResult moduleResult = new AIModuleResult();
         moduleResult.moduleName = 'Agentic Document Reasoning';
@@ -496,7 +130,8 @@ public class AdvancedAIIntegrationEngine {
         
         return moduleResult;
     }
-     // Multimodal ingestion via Kasetti IDP integration
+    
+    // Multimodal ingestion via Kasetti IDP integration
     private static AIModuleResult executeMultimodalProcessing(String documentId, Map<String, Object> aiParameters) {
         AIModuleResult moduleResult = new AIModuleResult();
         moduleResult.moduleName = 'Multimodal Processing';
@@ -556,7 +191,8 @@ public class AdvancedAIIntegrationEngine {
         
         return moduleResult;
     }
-        // Semantic search capabilities integration
+    
+    // Semantic search capabilities integration
     private static AIModuleResult executeSemanticSearchAnalysis(String documentId, Map<String, Object> aiParameters) {
         AIModuleResult moduleResult = new AIModuleResult();
         moduleResult.moduleName = 'Semantic Search Analysis';
@@ -601,360 +237,423 @@ public class AdvancedAIIntegrationEngine {
         
         return moduleResult;
     }
-        // Enhanced document graph analysis with Snowflake integration
-    private static AIModuleResult executeDocumentGraphAnalysis(String documentId, Map<String, Object> aiParameters) {
+    
+    // Enhanced compliance intelligence with AI
+    private static AIModuleResult executeComplianceIntelligence(String documentId, Map<String, Object> aiParameters) {
         AIModuleResult moduleResult = new AIModuleResult();
-        moduleResult.moduleName = 'Document Graph Analysis';
-        moduleResult.moduleDescription = 'Graph-based document intelligence with relationship mapping';
-        moduleResult.startTime = DateTime.now();
+        moduleResult.moduleName = 'Compliance Intelligence';
+moduleResult.moduleDescription = 'AI-powered regulatory compliance analysis with real-time updates';
+moduleResult.startTime = DateTime.now();
 
-        try {
-            // Query document relationships using Snowflake graph capabilities
-            DocumentGraphResult graphResult = buildEnhancedDocumentGraph(documentId, aiParameters);
-            
-            // Analyze document relationships and patterns
-            GraphIntelligenceResult intelligenceResult = analyzeDocumentIntelligence(graphResult);
-            
-            // Store graph analysis results
-            DocumentGraphRecord__c graphRecord = new DocumentGraphRecord__c(
-                Document__c = documentId,
-                Related_Documents__c = String.join(graphResult.relatedDocuments, ';'),
-                Parent_Documents__c = String.join(graphResult.parentDocuments, ';'),
-                Child_Documents__c = String.join(graphResult.childDocuments, ';'),
-                Sibling_Documents__c = String.join(graphResult.siblingDocuments, ';'),
-                Version_Chain__c = String.join(graphResult.versionChain, ';'),
-                Reference_Documents__c = String.join(graphResult.referenceDocuments, ';'),
-                Relationship_Types__c = JSON.serialize(graphResult.relationshipTypes),
-                Similarity_Matrix__c = JSON.serialize(graphResult.similarityMatrix),
-                Centrality_Score__c = graphResult.centralityScore,
-                Influence_Score__c = graphResult.influenceScore,
-                Authority_Score__c = graphResult.authorityScore,
-                Hub_Score__c = graphResult.hubScore,
-                Cluster_Assignment__c = graphResult.clusterAssignment,
-                Community_Detection__c = JSON.serialize(graphResult.communityDetection),
-                Path_Analysis__c = JSON.serialize(graphResult.pathAnalysis),
-                Network_Metrics__c = JSON.serialize(graphResult.networkMetrics),
-                Hidden_Patterns__c = JSON.serialize(intelligenceResult.hiddenPatterns),
-                Anomalous_Relationships__c = JSON.serialize(intelligenceResult.anomalousRelationships),
-                Knowledge_Gaps__c = JSON.serialize(intelligenceResult.knowledgeGaps),
-                Graph_Confidence__c = graphResult.confidenceScore,
-                Processing_Date__c = DateTime.now(),
-                Analysis_Status__c = 'COMPLETED',
-                Graph_Engine_Version__c = graphResult.engineVersion
-            );
-            insert graphRecord;
-            
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = 'SUCCESS';
-            moduleResult.confidenceScore = graphResult.confidenceScore;
-            moduleResult.output = JSON.serialize(graphResult);
-            moduleResult.insights = 'Analyzed ' + graphResult.relatedDocuments.size() + 
-                ' related documents with ' + intelligenceResult.hiddenPatterns.size() + ' hidden patterns discovered';
-            
-        } catch (Exception e) {
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = 'FAILED';
-            moduleResult.errorMessage = e.getMessage();
-            moduleResult.confidenceScore = 0;
-        }
+try {
+    // Get existing analysis data for enhanced compliance intelligence
+    Map<String, Object> documentContext = gatherDocumentAnalysisContext(documentId);
+    
+    // Perform AI-driven compliance analysis with regulatory feeds
+    ComplianceIntelligenceResult complianceResult = performEnhancedComplianceAnalysis(
+        documentId, 
+        documentContext, 
+        aiParameters
+    );
+    
+    // Store compliance intelligence results
+    ComplianceIntelligenceRecord__c complianceRecord = new ComplianceIntelligenceRecord__c(
+        Document__c = documentId,
+        Applicable_Regulations__c = String.join(complianceResult.applicableRegulations, ';'),
+        GDPR_Compliance_Score__c = complianceResult.gdprScore,
+        HIPAA_Compliance_Score__c = complianceResult.hipaaScore,
+        SOX_Compliance_Score__c = complianceResult.soxScore,
+        PCI_DSS_Compliance_Score__c = complianceResult.pciDssScore,
+        UIDAI_Compliance_Score__c = complianceResult.uidaiScore,
+        SEBI_Compliance_Score__c = complianceResult.sebiScore,
+        Overall_Compliance_Score__c = complianceResult.overallScore,
+        Risk_Level__c = complianceResult.riskLevel,
+        Violation_Predictions__c = String.join(complianceResult.predictedViolations, ';'),
+        Regulatory_Gaps__c = String.join(complianceResult.regulatoryGaps, ';'),
+        Recommended_Actions__c = String.join(complianceResult.recommendedActions, '\n'),
+        Jurisdiction_Analysis__c = JSON.serialize(complianceResult.jurisdictionAnalysis),
+        Data_Subject_Rights__c = JSON.serialize(complianceResult.dataSubjectRights),
+        Consent_Requirements__c = JSON.serialize(complianceResult.consentRequirements),
+        Retention_Requirements__c = JSON.serialize(complianceResult.retentionRequirements),
+        Cross_Border_Implications__c = JSON.serialize(complianceResult.crossBorderImplications),
+        Audit_Trail_Requirements__c = JSON.serialize(complianceResult.auditRequirements),
+        Compliance_Confidence__c = complianceResult.confidenceScore,
+        Last_Updated_Regulations__c = complianceResult.lastRegulatoryUpdate,
+        Processing_Date__c = DateTime.now(),
+        Analysis_Status__c = 'COMPLETED',
+        AI_Model_Version__c = complianceResult.modelVersion
+    );
+    insert complianceRecord;
+    
+    moduleResult.endTime = DateTime.now();
+    moduleResult.status = complianceResult.overallScore < 70 ? 'WARNING' : 'SUCCESS';
+    moduleResult.confidenceScore = complianceResult.confidenceScore;
+    moduleResult.output = JSON.serialize(complianceResult);
+    moduleResult.insights = generateComplianceIntelligenceInsights(complianceResult);
+    
+} catch (Exception e) {
+    moduleResult.endTime = DateTime.now();
+    moduleResult.status = 'FAILED';
+    moduleResult.errorMessage = e.getMessage();
+    moduleResult.confidenceScore = 0;
+}
 
-        return moduleResult;
-    }
-        // Contextual AI recommendations based on all analysis results
-    private static AIModuleResult executeContextualRecommendations(String documentId, Map<String, Object> aiParameters) {
-        AIModuleResult moduleResult = new AIModuleResult();
-        moduleResult.moduleName = 'Contextual AI Recommendations';
-        moduleResult.moduleDescription = 'Comprehensive AI-powered recommendations and insights';
-        moduleResult.startTime = DateTime.now();
+return moduleResult;
+}
 
-        try {
-            // Gather comprehensive analysis context
-            ContextualAnalysisData contextData = gatherComprehensiveAnalysisContext(documentId);
-            
-            // Generate multi-dimensional recommendations
-            ContextualRecommendationsResult recommendationsResult = generateAdvancedContextualRecommendations(
-                documentId, 
-                contextData, 
-                aiParameters
-            );
-            
-            // Store contextual recommendations
-            ContextualRecommendationsRecord__c recommendationsRecord = new ContextualRecommendationsRecord__c(
-                Document__c = documentId,
-                Executive_Summary__c = recommendationsResult.executiveSummary,
-                Security_Recommendations__c = String.join(recommendationsResult.securityRecommendations, '\n'),
-                Compliance_Actions__c = String.join(recommendationsResult.complianceActions, '\n'),
-                Risk_Mitigation_Steps__c = String.join(recommendationsResult.riskMitigationSteps, '\n'),
-                Process_Optimizations__c = String.join(recommendationsResult.processOptimizations, '\n'),
-                Technology_Enhancements__c = String.join(recommendationsResult.technologyEnhancements, '\n'),
-                Training_Requirements__c = String.join(recommendationsResult.trainingRequirements, '\n'),
-                Policy_Updates__c = String.join(recommendationsResult.policyUpdates, '\n'),
-                Immediate_Actions__c = String.join(recommendationsResult.immediateActions, '\n'),
-                Short_Term_Goals__c = String.join(recommendationsResult.shortTermGoals, '\n'),
-                Long_Term_Strategy__c = String.join(recommendationsResult.longTermStrategy, '\n'),
-                Cost_Benefit_Analysis__c = JSON.serialize(recommendationsResult.costBenefitAnalysis),
-                Implementation_Timeline__c = JSON.serialize(recommendationsResult.implementationTimeline),
-                Success_Metrics__c = JSON.serialize(recommendationsResult.successMetrics),
-                Stakeholder_Impact__c = JSON.serialize(recommendationsResult.stakeholderImpact),
-                Resource_Requirements__c = JSON.serialize(recommendationsResult.resourceRequirements),
-                ROI_Projections__c = JSON.serialize(recommendationsResult.roiProjections),
-                Priority_Matrix__c = JSON.serialize(recommendationsResult.priorityMatrix),
-                Dependencies__c = JSON.serialize(recommendationsResult.dependencies),
-                Confidence_Scores__c = JSON.serialize(recommendationsResult.confidenceScores),
-                Overall_Confidence__c = recommendationsResult.overallConfidence,
-                Context_Analysis__c = JSON.serialize(contextData),
-                Processing_Date__c = DateTime.now(),
-                Status__c = 'COMPLETED',
-                AI_Engine_Version__c = recommendationsResult.engineVersion
-            );
-            insert recommendationsRecord;
-            
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = 'SUCCESS';
-            moduleResult.confidenceScore = recommendationsResult.overallConfidence;
-            moduleResult.output = JSON.serialize(recommendationsResult);
-            moduleResult.insights = generateContextualInsightsSummary(recommendationsResult);
-            
-        } catch (Exception e) {
-            moduleResult.endTime = DateTime.now();
-            moduleResult.status = 'FAILED';
-            moduleResult.errorMessage = e.getMessage();
-            moduleResult.confidenceScore = 0;
-        }
+// Enhanced document graph analysis with Snowflake integration
+private static AIModuleResult executeDocumentGraphAnalysis(String documentId, Map<String, Object> aiParameters) {
+AIModuleResult moduleResult = new AIModuleResult();
+moduleResult.moduleName = 'Document Graph Analysis';
+moduleResult.moduleDescription = 'Graph-based document intelligence with relationship mapping';
+moduleResult.startTime = DateTime.now();
 
-        return moduleResult;
-    }
-        // AI processing result classes and supporting structures
-    public class AIProcessingResult {
-        public String documentId;
-        public DateTime processingStartTime;
-        public DateTime processingEndTime;
-        public Long totalProcessingTime;
-        public String overallStatus;
-        public Decimal confidenceScore;
-        public List<AIModuleResult> aiModules;
-        public String errorMessage;
-        public String errorDetails;
+try {
+    // Query document relationships using Snowflake graph capabilities
+    DocumentGraphResult graphResult = buildEnhancedDocumentGraph(documentId, aiParameters);
+    
+    // Analyze document relationships and patterns
+    GraphIntelligenceResult intelligenceResult = analyzeDocumentIntelligence(graphResult);
+    
+    // Store graph analysis results
+    DocumentGraphRecord__c graphRecord = new DocumentGraphRecord__c(
+        Document__c = documentId,
+        Related_Documents__c = String.join(graphResult.relatedDocuments, ';'),
+        Parent_Documents__c = String.join(graphResult.parentDocuments, ';'),
+        Child_Documents__c = String.join(graphResult.childDocuments, ';'),
+        Sibling_Documents__c = String.join(graphResult.siblingDocuments, ';'),
+        Version_Chain__c = String.join(graphResult.versionChain, ';'),
+        Reference_Documents__c = String.join(graphResult.referenceDocuments, ';'),
+        Relationship_Types__c = JSON.serialize(graphResult.relationshipTypes),
+        Similarity_Matrix__c = JSON.serialize(graphResult.similarityMatrix),
+        Centrality_Score__c = graphResult.centralityScore,
+        Influence_Score__c = graphResult.influenceScore,
+        Authority_Score__c = graphResult.authorityScore,
+        Hub_Score__c = graphResult.hubScore,
+        Cluster_Assignment__c = graphResult.clusterAssignment,
+        Community_Detection__c = JSON.serialize(graphResult.communityDetection),
+        Path_Analysis__c = JSON.serialize(graphResult.pathAnalysis),
+        Network_Metrics__c = JSON.serialize(graphResult.networkMetrics),
+        Hidden_Patterns__c = JSON.serialize(intelligenceResult.hiddenPatterns),
+        Anomalous_Relationships__c = JSON.serialize(intelligenceResult.anomalousRelationships),
+        Knowledge_Gaps__c = JSON.serialize(intelligenceResult.knowledgeGaps),
+        Graph_Confidence__c = graphResult.confidenceScore,
+        Processing_Date__c = DateTime.now(),
+        Analysis_Status__c = 'COMPLETED',
+        Graph_Engine_Version__c = graphResult.engineVersion
+    );
+    insert graphRecord;
+    
+    moduleResult.endTime = DateTime.now();
+    moduleResult.status = 'SUCCESS';
+    moduleResult.confidenceScore = graphResult.confidenceScore;
+    moduleResult.output = JSON.serialize(graphResult);
+    moduleResult.insights = 'Analyzed ' + graphResult.relatedDocuments.size() + 
+        ' related documents with ' + intelligenceResult.hiddenPatterns.size() + ' hidden patterns discovered';
+    
+} catch (Exception e) {
+    moduleResult.endTime = DateTime.now();
+    moduleResult.status = 'FAILED';
+    moduleResult.errorMessage = e.getMessage();
+    moduleResult.confidenceScore = 0;
+}
 
-        public AIProcessingResult() {
-            this.aiModules = new List<AIModuleResult>();
-        }
-    }
+return moduleResult;
+}
 
-    public class AIModuleResult {
-        public String moduleName;
-        public String moduleDescription;
-        public DateTime startTime;
-        public DateTime endTime;
-        public String status;
-        public Decimal confidenceScore;
-        public String output;
-        public String insights;
-        public String errorMessage;
+// Contextual AI recommendations based on all analysis results
+private static AIModuleResult executeContextualRecommendations(String documentId, Map<String, Object> aiParameters) {
+AIModuleResult moduleResult = new AIModuleResult();
+moduleResult.moduleName = 'Contextual AI Recommendations';
+moduleResult.moduleDescription = 'Comprehensive AI-powered recommendations and insights';
+moduleResult.startTime = DateTime.now();
 
-        public AIModuleResult() {
-            this.confidenceScore = 0;
-        }
-    }
+try {
+    // Gather comprehensive analysis context
+    ContextualAnalysisData contextData = gatherComprehensiveAnalysisContext(documentId);
+    
+    // Generate multi-dimensional recommendations
+    ContextualRecommendationsResult recommendationsResult = generateAdvancedContextualRecommendations(
+        documentId, 
+        contextData, 
+        aiParameters
+    );
+    
+    // Store contextual recommendations
+    ContextualRecommendationsRecord__c recommendationsRecord = new ContextualRecommendationsRecord__c(
+        Document__c = documentId,
+        Executive_Summary__c = recommendationsResult.executiveSummary,
+        Security_Recommendations__c = String.join(recommendationsResult.securityRecommendations, '\n'),
+        Compliance_Actions__c = String.join(recommendationsResult.complianceActions, '\n'),
+        Risk_Mitigation_Steps__c = String.join(recommendationsResult.riskMitigationSteps, '\n'),
+        Process_Optimizations__c = String.join(recommendationsResult.processOptimizations, '\n'),
+        Technology_Enhancements__c = String.join(recommendationsResult.technologyEnhancements, '\n'),
+        Training_Requirements__c = String.join(recommendationsResult.trainingRequirements, '\n'),
+        Policy_Updates__c = String.join(recommendationsResult.policyUpdates, '\n'),
+        Immediate_Actions__c = String.join(recommendationsResult.immediateActions, '\n'),
+        Short_Term_Goals__c = String.join(recommendationsResult.shortTermGoals, '\n'),
+        Long_Term_Strategy__c = String.join(recommendationsResult.longTermStrategy, '\n'),
+        Cost_Benefit_Analysis__c = JSON.serialize(recommendationsResult.costBenefitAnalysis),
+        Implementation_Timeline__c = JSON.serialize(recommendationsResult.implementationTimeline),
+        Success_Metrics__c = JSON.serialize(recommendationsResult.successMetrics),
+        Stakeholder_Impact__c = JSON.serialize(recommendationsResult.stakeholderImpact),
+        Resource_Requirements__c = JSON.serialize(recommendationsResult.resourceRequirements),
+        ROI_Projections__c = JSON.serialize(recommendationsResult.roiProjections),
+        Priority_Matrix__c = JSON.serialize(recommendationsResult.priorityMatrix),
+        Dependencies__c = JSON.serialize(recommendationsResult.dependencies),
+        Confidence_Scores__c = JSON.serialize(recommendationsResult.confidenceScores),
+        Overall_Confidence__c = recommendationsResult.overallConfidence,
+        Context_Analysis__c = JSON.serialize(contextData),
+        Processing_Date__c = DateTime.now(),
+        Status__c = 'COMPLETED',
+        AI_Engine_Version__c = recommendationsResult.engineVersion
+    );
+    insert recommendationsRecord;
+    
+    moduleResult.endTime = DateTime.now();
+    moduleResult.status = 'SUCCESS';
+    moduleResult.confidenceScore = recommendationsResult.overallConfidence;
+    moduleResult.output = JSON.serialize(recommendationsResult);
+    moduleResult.insights = generateContextualInsightsSummary(recommendationsResult);
+    
+} catch (Exception e) {
+    moduleResult.endTime = DateTime.now();
+    moduleResult.status = 'FAILED';
+    moduleResult.errorMessage = e.getMessage();
+    moduleResult.confidenceScore = 0;
+}
 
-    // Supporting result classes for AI modules
-    public class VectorEmbeddingResult {
-        public String modelName;
-        public Integer dimensions;
-        public List<Decimal> vectorData;
-        public Decimal confidence;
-        public String snowflakeId;
-        public Map<String, Object> metadata;
-    }
+return moduleResult;
+}
 
-    public class AgenticReasoningResult {
-        public String reasoningType;
-        public Map<String, Object> clauseAnalysis;
-        public Map<String, Object> legalInsights;
-        public Map<String, Object> riskAssessment;
-        public List<String> complianceFlags;
-        public Decimal confidence;
-        public String agentVersion;
-    }
+// AI processing result classes and supporting structures
+public class AIProcessingResult {
+public String documentId;
+public DateTime processingStartTime;
+public DateTime processingEndTime;
+public Long totalProcessingTime;
+public String overallStatus;
+public Decimal confidenceScore;
+public List<AIModuleResult> aiModules;
+public String errorMessage;
+public String errorDetails;
 
-    public class MultimodalResult {
-        public String processingType;
-        public String extractedText;
-        public Map<String, Object> layoutAnalysis;
-        public Map<String, Object> modalityBreakdown;
-        public Decimal confidence;
-        public String jobId;
-    }
+public AIProcessingResult() {
+    this.aiModules = new List<AIModuleResult>();
+}
+}
 
-    public class ComplianceIntelligenceResult {
-        public List<String> applicableRegulations;
-        public Decimal gdprScore;
-        public Decimal hipaaScore;
-        public Decimal soxScore;
-        public Decimal pciDssScore;
-        public Decimal uidaiScore;
-        public Decimal sebiScore;
-        public Decimal overallScore;
-        public String riskLevel;
-        public List<String> predictedViolations;
-        public List<String> regulatoryGaps;
-        public List<String> recommendedActions;
-        public Map<String, Object> jurisdictionAnalysis;
-        public Map<String, Object> dataSubjectRights;
-        public Map<String, Object> consentRequirements;
-        public Map<String, Object> retentionRequirements;
-        public Map<String, Object> crossBorderImplications;
-        public Map<String, Object> auditRequirements;
-        public Decimal confidenceScore;
-        public DateTime lastRegulatoryUpdate;
-        public String modelVersion;
-    }
+public class AIModuleResult {
+public String moduleName;
+public String moduleDescription;
+public DateTime startTime;
+public DateTime endTime;
+public String status;
+public Decimal confidenceScore;
+public String output;
+public String insights;
+public String errorMessage;
 
-    public class DocumentGraphResult {
-        public List<String> relatedDocuments;
-        public List<String> parentDocuments;
-        public List<String> childDocuments;
-        public List<String> siblingDocuments;
-        public List<String> versionChain;
-        public List<String> referenceDocuments;
-        public Map<String, Object> relationshipTypes;
-        public Map<String, Object> similarityMatrix;
-        public Decimal centralityScore;
-        public Decimal influenceScore;
-        public Decimal authorityScore;
-        public Decimal hubScore;
-        public String clusterAssignment;
-        public Map<String, Object> communityDetection;
-        public Map<String, Object> pathAnalysis;
-        public Map<String, Object> networkMetrics;
-        public Decimal confidenceScore;
-        public String engineVersion;
-    }
+public AIModuleResult() {
+    this.confidenceScore = 0;
+}
+}
 
-    public class GraphIntelligenceResult {
-        public List<Map<String, Object>> hiddenPatterns;
-        public List<Map<String, Object>> anomalousRelationships;
-        public List<Map<String, Object>> knowledgeGaps;
-    }
+// Supporting result classes for AI modules
+public class VectorEmbeddingResult {
+public String modelName;
+public Integer dimensions;
+public List<Decimal> vectorData;
+public Decimal confidence;
+public String snowflakeId;
+public Map<String, Object> metadata;
+}
 
-    public class ContextualRecommendationsResult {
-        public String executiveSummary;
-        public List<String> securityRecommendations;
-        public List<String> complianceActions;
-        public List<String> riskMitigationSteps;
-        public List<String> processOptimizations;
-        public List<String> technologyEnhancements;
-        public List<String> trainingRequirements;
-        public List<String> policyUpdates;
-        public List<String> immediateActions;
-        public List<String> shortTermGoals;
-        public List<String> longTermStrategy;
-        public Map<String, Object> costBenefitAnalysis;
-        public Map<String, Object> implementationTimeline;
-        public Map<String, Object> successMetrics;
-        public Map<String, Object> stakeholderImpact;
-        public Map<String, Object> resourceRequirements;
-        public Map<String, Object> roiProjections;
-        public Map<String, Object> priorityMatrix;
-        public Map<String, Object> dependencies;
-        public Map<String, Decimal> confidenceScores;
-        public Decimal overallConfidence;
-        public String engineVersion;
-    }
+public class AgenticReasoningResult {
+public String reasoningType;
+public Map<String, Object> clauseAnalysis;
+public Map<String, Object> legalInsights;
+public Map<String, Object> riskAssessment;
+public List<String> complianceFlags;
+public Decimal confidence;
+public String agentVersion;
+}
 
-    public class ContextualAnalysisData {
-        public Map<String, Object> semanticData;
-        public Map<String, Object> complianceData;
-        public Map<String, Object> riskData;
-        public Map<String, Object> anomalyData;
-        public Map<String, Object> graphData;
-        public Map<String, Object> nlpData;
-        public Map<String, Object> predictiveData;
-        public Map<String, Object> embeddingData;
-        public Map<String, Object> multimodalData;
-    }
+public class MultimodalResult {
+public String processingType;
+public String extractedText;
+public Map<String, Object> layoutAnalysis;
+public Map<String, Object> modalityBreakdown;
+public Decimal confidence;
+public String jobId;
+}
 
-    // Utility methods for AI integration with external systems
-    private static VectorEmbeddingResult callExternalLLMForEmbeddings(String content, Map<String, Object> parameters) {
-        // Implementation for calling external LLM APIs (OpenAI, Cohere, etc.)
-        // This would use Salesforce Named Credentials and HTTP callouts
-        VectorEmbeddingResult result = new VectorEmbeddingResult();
-        // Mock implementation - replace with actual API integration
-        result.modelName = 'text-embedding-ada-002';
-        result.dimensions = 1536;
-        result.confidence = 95.0;
-        result.snowflakeId = generateSnowflakeEmbeddingId();
-        result.metadata = new Map<String, Object>{
-            'content_length' => content.length(),
-            'processing_timestamp' => DateTime.now().getTime(),
-            'model_version' => '2024-01'
+public class ComplianceIntelligenceResult {
+public List<String> applicableRegulations;
+public Decimal gdprScore;
+public Decimal hipaaScore;
+public Decimal soxScore;
+public Decimal pciDssScore;
+public Decimal uidaiScore;
+public Decimal sebiScore;
+public Decimal overallScore;
+public String riskLevel;
+public List<String> predictedViolations;
+public List<String> regulatoryGaps;
+public List<String> recommendedActions;
+public Map<String, Object> jurisdictionAnalysis;
+public Map<String, Object> dataSubjectRights;
+public Map<String, Object> consentRequirements;
+public Map<String, Object> retentionRequirements;
+public Map<String, Object> crossBorderImplications;
+public Map<String, Object> auditRequirements;
+public Decimal confidenceScore;
+public DateTime lastRegulatoryUpdate;
+public String modelVersion;
+}
+
+public class DocumentGraphResult {
+public List<String> relatedDocuments;
+public List<String> parentDocuments;
+public List<String> childDocuments;
+public List<String> siblingDocuments;
+public List<String> versionChain;
+public List<String> referenceDocuments;
+public Map<String, Object> relationshipTypes;
+public Map<String, Object> similarityMatrix;
+public Decimal centralityScore;
+public Decimal influenceScore;
+public Decimal authorityScore;
+public Decimal hubScore;
+public String clusterAssignment;
+public Map<String, Object> communityDetection;
+public Map<String, Object> pathAnalysis;
+public Map<String, Object> networkMetrics;
+public Decimal confidenceScore;
+public String engineVersion;
+}
+
+public class GraphIntelligenceResult {
+public List<Map<String, Object>> hiddenPatterns;
+public List<Map<String, Object>> anomalousRelationships;
+public List<Map<String, Object>> knowledgeGaps;
+}
+
+public class ContextualRecommendationsResult {
+public String executiveSummary;
+public List<String> securityRecommendations;
+public List<String> complianceActions;
+public List<String> riskMitigationSteps;
+public List<String> processOptimizations;
+public List<String> technologyEnhancements;
+public List<String> trainingRequirements;
+public List<String> policyUpdates;
+public List<String> immediateActions;
+public List<String> shortTermGoals;
+public List<String> longTermStrategy;
+public Map<String, Object> costBenefitAnalysis;
+public Map<String, Object> implementationTimeline;
+public Map<String, Object> successMetrics;
+public Map<String, Object> stakeholderImpact;
+public Map<String, Object> resourceRequirements;
+public Map<String, Object> roiProjections;
+public Map<String, Object> priorityMatrix;
+public Map<String, Object> dependencies;
+public Map<String, Decimal> confidenceScores;
+public Decimal overallConfidence;
+public String engineVersion;
+}
+
+public class ContextualAnalysisData {
+public Map<String, Object> semanticData;
+public Map<String, Object> complianceData;
+public Map<String, Object> riskData;
+public Map<String, Object> anomalyData;
+public Map<String, Object> graphData;
+public Map<String, Object> nlpData;
+public Map<String, Object> predictiveData;
+public Map<String, Object> embeddingData;
+public Map<String, Object> multimodalData;
+}
+
+// Utility methods for AI integration with external systems
+private static VectorEmbeddingResult callExternalLLMForEmbeddings(String content, Map<String, Object> parameters) {
+// Implementation for calling external LLM APIs (OpenAI, Cohere, etc.)
+// This would use Salesforce Named Credentials and HTTP callouts
+VectorEmbeddingResult result = new VectorEmbeddingResult();
+// Mock implementation - replace with actual API integration
+result.modelName = 'text-embedding-ada-002';
+result.dimensions = 1536;
+result.confidence = 95.0;
+result.snowflakeId = generateSnowflakeEmbeddingId();
+result.metadata = new Map<String, Object>{
+    'content_length' => content.length(),
+    'processing_timestamp' => DateTime.now().getTime(),
+    'model_version' => '2024-01'
+};
+return result;
+}
+private static void storeEmbeddingsInSnowflake(String documentId, VectorEmbeddingResult embeddingResult) {
+    // Implementation for storing embeddings in Snowflake via JDBC/REST
+    try {
+        // Construct Snowflake API call
+        Map<String, Object> snowflakePayload = new Map<String, Object>{
+            'document_id' => documentId,
+            'vector' => embeddingResult.vectorData,
+            'dimensions' => embeddingResult.dimensions,
+            'model_name' => embeddingResult.modelName,
+            'confidence' => embeddingResult.confidence,
+            'metadata_json' => JSON.serialize(embeddingResult.metadata),
+            'created_timestamp' => DateTime.now().getTime(),
+            'salesforce_org_id' => UserInfo.getOrganizationId(),
+            'tenant_id' => getTenantId()
         };
-        return result;
-    }
 
-    // Snowflake Embedding Storage Method
-    private static void storeEmbeddingsInSnowflake(String documentId, VectorEmbeddingResult embeddingResult) {
-        // Implementation for storing embeddings in Snowflake via JDBC/REST
-        try {
-            // Construct Snowflake API call
-            Map<String, Object> snowflakePayload = new Map<String, Object>{
-                'document_id' => documentId,
-                'vector' => embeddingResult.vectorData,
-                'dimensions' => embeddingResult.dimensions,
-                'model_name' => embeddingResult.modelName,
-                'confidence' => embeddingResult.confidence,
-                'metadata_json' => JSON.serialize(embeddingResult.metadata),
-                'created_timestamp' => DateTime.now().getTime(),
-                'salesforce_org_id' => UserInfo.getOrganizationId(),
-                'tenant_id' => getTenantId()
-            };
-
-            // Make HTTP callout to Snowflake REST API
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint('callout:SnowflakeVectorDB/api/v1/embeddings');
-            req.setMethod('POST');
-            req.setHeader('Content-Type', 'application/json');
-            req.setHeader('Authorization', 'Bearer ' + getSnowflakeToken());
-            req.setBody(JSON.serialize(snowflakePayload));
-
-            Http http = new Http();
-            HttpResponse res = http.send(req);
-
-            if (res.getStatusCode() == 200) {
-                Map<String, Object> responseData = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-
-                // Update local record with Snowflake reference
-                update new VectorEmbeddingRecord__c(
-                    Id = embeddingResult.recordId,
-                    Snowflake_Record_Id__c = (String) responseData.get('record_id'),
-                    Snowflake_Status__c = 'STORED',
-                    Last_Sync__c = DateTime.now()
-                );
-
-                System.debug('Successfully stored embedding in Snowflake: ' + responseData.get('record_id'));
-            } else {
-                throw new CalloutException('Snowflake API Error: ' + res.getBody());
-            }
-
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Failed to store embedding in Snowflake: ' + e.getMessage());
-
-            // Update record with error status
+        // Make HTTP callout to Snowflake REST API
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint('callout:SnowflakeVectorDB/api/v1/embeddings');
+        req.setMethod('POST');
+        req.setHeader('Content-Type', 'application/json');
+        req.setHeader('Authorization', 'Bearer ' + getSnowflakeToken());
+        req.setBody(JSON.serialize(snowflakePayload));
+        
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+        
+        if (res.getStatusCode() == 200) {
+            Map<String, Object> responseData = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+            
+            // Update local record with Snowflake reference
             update new VectorEmbeddingRecord__c(
                 Id = embeddingResult.recordId,
-                Snowflake_Status__c = 'ERROR',
-                Error_Message__c = e.getMessage(),
-                Last_Sync_Attempt__c = DateTime.now()
+                Snowflake_Record_Id__c = (String) responseData.get('record_id'),
+                Snowflake_Status__c = 'STORED',
+                Last_Sync__c = DateTime.now()
             );
-
-            // Create error log for monitoring
-            insert new EmbeddingErrorLog__c(
-                Document_Id__c = documentId,
-                Error_Type__c = 'SNOWFLAKE_STORAGE_FAILURE',
-                Error_Message__c = e.getMessage(),
-                Stack_Trace__c = e.getStackTraceString(),
-                Timestamp__c = DateTime.now()
-            );
+            
+            System.debug('Successfully stored embedding in Snowflake: ' + responseData.get('record_id'));
+        } else {
+            throw new CalloutException('Snowflake API Error: ' + res.getBody());
         }
+        
+    } catch (Exception e) {
+        System.debug(LoggingLevel.ERROR, 'Failed to store embedding in Snowflake: ' + e.getMessage());
+        
+        // Update record with error status
+        update new VectorEmbeddingRecord__c(
+            Id = embeddingResult.recordId,
+            Snowflake_Status__c = 'ERROR',
+            Error_Message__c = e.getMessage(),
+            Last_Sync_Attempt__c = DateTime.now()
+        );
+        
+        // Create error log for monitoring
+        insert new EmbeddingErrorLog__c(
+            Document_Id__c = documentId,
+            Error_Type__c = 'SNOWFLAKE_STORAGE_FAILURE',
+            Error_Message__c = e.getMessage(),
+            Stack_Trace__c = e.getStackTraceString(),
+            Timestamp__c = DateTime.now()
+        );
     }
 }

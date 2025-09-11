@@ -1,56 +1,50 @@
-// ===================================
-// DOCUMENT EXPIRATION ENFORCEMENT SYSTEM
-// ===================================
-
-public class DocumentExpirationManager {
-    
     // Create expiration policies and rules
     public static void createExpirationPolicies() {
         List<DocumentExpirationPolicy__c> policies = new List<DocumentExpirationPolicy__c>();
         
         // Contract expiration policy
         policies.add(new DocumentExpirationPolicy__c(
-            Policy_Name__c                     = 'Contract_Auto_Expiration_Policy',
-            Document_Type__c                   = 'SERVICE_AGREEMENT',
-            Expiration_Rule_Type__c            = 'DATE_BASED',
-            Default_Validity_Period_Days__c    = 365,
-            Grace_Period_Days__c               = 30,
-            Auto_Renewal_Enabled__c            = true,
-            Auto_Renewal_Notice_Days__c        = 90,
-            Pre_Expiration_Warning_Days__c     = 60,
-            Hard_Expiration_Enforcement__c     = true,
+            Policy_Name__c = 'Contract_Auto_Expiration_Policy',
+            Document_Type__c = 'SERVICE_AGREEMENT',
+            Expiration_Rule_Type__c = 'DATE_BASED',
+            Default_Validity_Period_Days__c = 365,
+            Grace_Period_Days__c = 30,
+            Auto_Renewal_Enabled__c = true,
+            Auto_Renewal_Notice_Days__c = 90,
+            Pre_Expiration_Warning_Days__c = 60,
+            Hard_Expiration_Enforcement__c = true,
             Stakeholder_Notification_Template__c = 'Contract_Expiration_Warning',
-            Escalation_Chain__c                = 'manager@company.com;legal@company.com;executive@company.com',
-            Business_Impact_Assessment__c      = 'HIGH'
+            Escalation_Chain__c = 'manager@company.com;legal@company.com;executive@company.com',
+            Business_Impact_Assessment__c = 'HIGH'
         ));
         
         // Regulatory compliance expiration
         policies.add(new DocumentExpirationPolicy__c(
-            Policy_Name__c                     = 'Compliance_Certificate_Expiration',
-            Document_Type__c                   = 'COMPLIANCE_CERTIFICATE',
-            Expiration_Rule_Type__c            = 'REGULATORY_BASED',
-            Default_Validity_Period_Days__c    = 365,
-            Grace_Period_Days__c               = 0, // No grace period for compliance
-            Auto_Renewal_Enabled__c            = false,
-            Pre_Expiration_Warning_Days__c     = 90,
-            Hard_Expiration_Enforcement__c     = true,
-            Compliance_Risk_Level__c           = 'CRITICAL',
-            Regulatory_Body__c                 = 'ISO 27001, SOC 2, GDPR',
-            Emergency_Contact__c               = 'compliance-emergency@company.com'
+            Policy_Name__c = 'Compliance_Certificate_Expiration',
+            Document_Type__c = 'COMPLIANCE_CERTIFICATE',
+            Expiration_Rule_Type__c = 'REGULATORY_BASED',
+            Default_Validity_Period_Days__c = 365,
+            Grace_Period_Days__c = 0, // No grace period for compliance
+            Auto_Renewal_Enabled__c = false,
+            Pre_Expiration_Warning_Days__c = 90,
+            Hard_Expiration_Enforcement__c = true,
+            Compliance_Risk_Level__c = 'CRITICAL',
+            Regulatory_Body__c = 'ISO 27001, SOC 2, GDPR',
+            Emergency_Contact__c = 'compliance-emergency@company.com'
         ));
         
         // Time-sensitive legal documents
         policies.add(new DocumentExpirationPolicy__c(
-            Policy_Name__c                     = 'NDA_Expiration_Management',
-            Document_Type__c                   = 'NON_DISCLOSURE_AGREEMENT',
-            Expiration_Rule_Type__c            = 'CONDITIONAL_BASED',
-            Default_Validity_Period_Days__c    = 1095, // 3 years
-            Grace_Period_Days__c               = 15,
-            Auto_Renewal_Enabled__c            = true,
-            Auto_Renewal_Conditions__c         = 'MUTUAL_CONSENT_REQUIRED',
-            Pre_Expiration_Warning_Days__c     = 120,
-            Post_Expiration_Actions__c         = 'ARCHIVE;NOTIFY_PARTIES;UPDATE_CRM',
-            Legal_Review_Required__c           = true
+            Policy_Name__c = 'NDA_Expiration_Management',
+            Document_Type__c = 'NON_DISCLOSURE_AGREEMENT',
+            Expiration_Rule_Type__c = 'CONDITIONAL_BASED',
+            Default_Validity_Period_Days__c = 1095, // 3 years
+            Grace_Period_Days__c = 15,
+            Auto_Renewal_Enabled__c = true,
+            Auto_Renewal_Conditions__c = 'MUTUAL_CONSENT_REQUIRED',
+            Pre_Expiration_Warning_Days__c = 120,
+            Post_Expiration_Actions__c = 'ARCHIVE;NOTIFY_PARTIES;UPDATE_CRM',
+            Legal_Review_Required__c = true
         ));
         
         insert policies;
@@ -64,16 +58,16 @@ public class DocumentExpirationManager {
         
         for (DocumentExpirationPolicy__c policy : policies) {
             jobs.add(new DocumentExpirationJob__c(
-                Job_Name__c                      = 'Monitor_' + policy.Policy_Name__c,
-                Expiration_Policy__c             = policy.Id,
-                Schedule_Expression__c           = '0 0 8 * * ?', // Daily at 8 AM
-                Job_Status__c                    = 'ACTIVE',
-                Last_Run_Date__c                 = null,
-                Next_Run_Date__c                 = DateTime.now().addDays(1),
-                Documents_Checked_Last_Run__c    = 0,
-                Warnings_Sent_Last_Run__c        = 0,
+                Job_Name__c = 'Monitor_' + policy.Policy_Name__c,
+                Expiration_Policy__c = policy.Id,
+                Schedule_Expression__c = '0 0 8 * * ?', // Daily at 8 AM
+                Job_Status__c = 'ACTIVE',
+                Last_Run_Date__c = null,
+                Next_Run_Date__c = DateTime.now().addDays(1),
+                Documents_Checked_Last_Run__c = 0,
+                Warnings_Sent_Last_Run__c = 0,
                 Expirations_Processed_Last_Run__c = 0,
-                Job_Priority__c                  = policy.Business_Impact_Assessment__c == 'HIGH' ? 'HIGH' : 'MEDIUM'
+                Job_Priority__c = policy.Business_Impact_Assessment__c == 'HIGH' ? 'HIGH' : 'MEDIUM'
             ));
         }
         
@@ -93,7 +87,7 @@ public class DocumentExpirationManager {
         ];
         
         // Find documents approaching expiration
-        Date warningDate   = Date.today().addDays(Integer.valueOf(policy.Pre_Expiration_Warning_Days__c));
+        Date warningDate = Date.today().addDays(Integer.valueOf(policy.Pre_Expiration_Warning_Days__c));
         Date expirationDate = Date.today();
         
         List<DocumentExpirationMonitor__c> monitors = [
@@ -110,22 +104,22 @@ public class DocumentExpirationManager {
         for (DocumentExpirationMonitor__c monitor : monitors) {
             // Determine alert priority and type
             String alertType = determineAlertType(monitor.Expiration_Date__c, policy);
-            String priority  = calculateAlertPriority(monitor, policy);
+            String priority = calculateAlertPriority(monitor, policy);
             
             // Create expiration alert
             DocumentExpirationAlert__c alert = new DocumentExpirationAlert__c(
-                Alert_Type__c                = alertType,
-                Document_Monitor__c          = monitor.Id,
-                Expiration_Policy__c         = policy.Id,
-                Document__c                  = monitor.Document__c,
-                Alert_Priority__c            = priority,
-                Days_Until_Expiration__c     = monitor.Expiration_Date__c.daysBetween(Date.today()),
-                Alert_Date__c                = Date.today(),
-                Alert_Status__c              = 'PENDING',
-                Business_Impact__c           = assessBusinessImpact(monitor),
-                Recommended_Actions__c       = generateRecommendedActions(monitor, policy),
-                Stakeholders_To_Notify__c    = policy.Escalation_Chain__c,
-                Auto_Renewal_Recommended__c  = shouldAutoRenew(monitor, policy)
+                Alert_Type__c = alertType,
+                Document_Monitor__c = monitor.Id,
+                Expiration_Policy__c = policy.Id,
+                Document__c = monitor.Document__c,
+                Alert_Priority__c = priority,
+                Days_Until_Expiration__c = monitor.Expiration_Date__c.daysBetween(Date.today()),
+                Alert_Date__c = Date.today(),
+                Alert_Status__c = 'PENDING',
+                Business_Impact__c = assessBusinessImpact(monitor),
+                Recommended_Actions__c = generateRecommendedActions(monitor, policy),
+                Stakeholders_To_Notify__c = policy.Escalation_Chain__c,
+                Auto_Renewal_Recommended__c = shouldAutoRenew(monitor, policy)
             );
             
             alerts.add(alert);
@@ -203,61 +197,55 @@ public class DocumentExpirationManager {
                monitor.Last_Activity_Date__c > Date.today().addDays(-90);
     }
     
-    private static void sendExpirationWarning(
-        DocumentExpirationMonitor__c monitor, 
-        DocumentExpirationPolicy__c policy, 
-        DocumentExpirationAlert__c alert
-    ) {
+    private static void sendExpirationWarning(DocumentExpirationMonitor__c monitor, 
+                                            DocumentExpirationPolicy__c policy, 
+                                            DocumentExpirationAlert__c alert) {
         // Send automated notification using specified template
         EmailNotificationService.sendTemplatedEmail(
             policy.Stakeholder_Notification_Template__c,
             policy.Escalation_Chain__c.split(';'),
             new Map<String, String>{
-                'documentTitle'      => monitor.Document_Title__c,
-                'expirationDate'     => String.valueOf(monitor.Expiration_Date__c),
-                'daysRemaining'      => String.valueOf(alert.Days_Until_Expiration__c),
+                'documentTitle' => monitor.Document_Title__c,
+                'expirationDate' => String.valueOf(monitor.Expiration_Date__c),
+                'daysRemaining' => String.valueOf(alert.Days_Until_Expiration__c),
                 'recommendedActions' => alert.Recommended_Actions__c
             }
         );
     }
     
-    private static void handleCriticalExpiration(
-        DocumentExpirationMonitor__c monitor,
-        DocumentExpirationPolicy__c policy,
-        DocumentExpirationAlert__c alert
-    ) {
+    private static void handleCriticalExpiration(DocumentExpirationMonitor__c monitor,
+                                               DocumentExpirationPolicy__c policy,
+                                               DocumentExpirationAlert__c alert) {
         // Escalate to management and create high-priority task
         Task escalationTask = new Task(
-            Subject     = 'CRITICAL: Document Expiring - ' + monitor.Document_Title__c,
+            Subject = 'CRITICAL: Document Expiring - ' + monitor.Document_Title__c,
             Description = 'Document expires in ' + alert.Days_Until_Expiration__c + ' days. ' +
-                          'Business impact: ' + alert.Business_Impact__c,
-            Priority    = 'High',
-            Status      = 'Not Started',
+                         'Business impact: ' + alert.Business_Impact__c,
+            Priority = 'High',
+            Status = 'Not Started',
             ActivityDate = Date.today().addDays(1),
-            OwnerId     = getEscalationOwner(policy.Escalation_Chain__c)
+            OwnerId = getEscalationOwner(policy.Escalation_Chain__c)
         );
         insert escalationTask;
     }
     
-    private static void enforceDocumentExpiration(
-        DocumentExpirationMonitor__c monitor,
-        DocumentExpirationPolicy__c policy,
-        DocumentExpirationAlert__c alert
-    ) {
+    private static void enforceDocumentExpiration(DocumentExpirationMonitor__c monitor,
+                                                DocumentExpirationPolicy__c policy,
+                                                DocumentExpirationAlert__c alert) {
         if (policy.Hard_Expiration_Enforcement__c) {
             // Archive expired document and revoke access
             monitor.Status__c = 'EXPIRED';
             
             // Create audit record for expiration enforcement
             DocumentExpirationAudit__c audit = new DocumentExpirationAudit__c(
-                Document__c             = monitor.Document__c,
-                Expiration_Policy__c    = policy.Id,
-                Expiration_Date__c      = monitor.Expiration_Date__c,
-                Enforcement_Date__c     = Date.today(),
-                Enforcement_Action__c   = 'DOCUMENT_DEACTIVATED',
-                Business_Impact__c      = alert.Business_Impact__c,
+                Document__c = monitor.Document__c,
+                Expiration_Policy__c = policy.Id,
+                Expiration_Date__c = monitor.Expiration_Date__c,
+                Enforcement_Date__c = Date.today(),
+                Enforcement_Action__c = 'DOCUMENT_DEACTIVATED',
+                Business_Impact__c = alert.Business_Impact__c,
                 Grace_Period_Applied__c = policy.Grace_Period_Days__c > 0,
-                Audit_Trail__c          = 'Document automatically expired per policy: ' + policy.Policy_Name__c
+                Audit_Trail__c = 'Document automatically expired per policy: ' + policy.Policy_Name__c
             );
             insert audit;
         }
@@ -283,10 +271,11 @@ public class DocumentExpirationManager {
         ];
         
         job.Documents_Checked_Last_Run__c = monitorsChecked;
-        job.Warnings_Sent_Last_Run__c     = alertsCreated;
-        job.Last_Run_Date__c              = DateTime.now();
-        job.Next_Run_Date__c              = DateTime.now().addDays(1);
+        job.Warnings_Sent_Last_Run__c = alertsCreated;
+        job.Last_Run_Date__c = DateTime.now();
+        job.Next_Run_Date__c = DateTime.now().addDays(1);
         
         update job;
     }
 }
+

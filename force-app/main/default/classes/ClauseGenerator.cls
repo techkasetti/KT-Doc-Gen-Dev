@@ -1,18 +1,6 @@
-public class ClauseGenerator {
+public with sharing class ClauseGenerator {
     
-    // private static final Map<String, Map<String, String>> CLAUSE_TEMPLATES = new Map<String, Map<String, String>>{
-    //     'US' => new Map<String, String>{
-    //         'Employment' => 'This employment agreement adheres to US federal employment laws and ',
-    //         'NDA' => 'This non-disclosure agreement follows US confidentiality standards and ',
-    //         'SLA' => 'This service level agreement meets US commercial standards and '
-    //     },
-    //     'EU' => new Map<String, String>{
-    //         'Employment' => 'This employment agreement complies with GDPR regulations and EU employment laws and ',
-    //         'NDA' => 'This non-disclosure agreement adheres to EU data protection directives and ',
-    //         'SLA' => 'This service level agreement meets EU commercial regulations and '
-    //     }
-    // };
-
+    // Static clause templates for different scenarios
     private static final Map<String, Map<String, String>> CLAUSE_TEMPLATES = new Map<String, Map<String, String>>{
         'US' => new Map<String, String>{
             'Employment' => 'This employment agreement is governed by the laws of the United States. The employee acknowledges that they are an at-will employee and that employment may be terminated by either party with or without cause. The employee agrees to maintain confidentiality of all proprietary information and agrees that any disputes will be resolved through binding arbitration.',
@@ -31,13 +19,6 @@ public class ClauseGenerator {
         }
     };
     
-    // private static final Map<String, String> ROLE_SPECIFIC_CLAUSES = new Map<String, String>{
-    //     'Manager' => 'includes management responsibilities and authorized signatory powers. ',
-    //     'Employee' => 'defines standard employee obligations and rights. ',
-    //     'Developer' => 'includes intellectual property and confidentiality obligations. ',
-    //     'Admin' => 'defines administrative access and system management responsibilities. '
-    // };
-
     private static final Map<String, String> ROLE_SPECIFIC_CLAUSES = new Map<String, String>{
         'Manager' => 'As a management-level employee, you acknowledge additional fiduciary responsibilities and agree to act in the best interests of the company. You are authorized to make decisions within your scope of authority and are responsible for team performance and compliance.',
         'Employee' => 'As an employee, you agree to perform your duties diligently and in accordance with company policies. You acknowledge receipt of the employee handbook and agree to comply with all applicable procedures and standards.',
@@ -45,17 +26,13 @@ public class ClauseGenerator {
         'Admin' => 'As an administrative user, you acknowledge access to sensitive system configurations and data. You agree to maintain system security, follow change management procedures, and protect confidential administrative information.'
     };
     
-    // public static String generateClause(String region, String role, String contractType) {
-    //     try {
-    //         String baseClause = getBaseClause(region, contractType);
-    //         String enhancedClause = enhanceWithAI(baseClause, region, role, contractType);
-    //         logClauseGeneration(region, role, contractType, 'SUCCESS', enhancedClause.length());
-    //         return enhancedClause;
-    //     } catch (Exception e) {
-    //         logClauseGeneration(region, role, contractType, 'ERROR', 0);
-    //         throw new ClauseGenerationException('Failed to generate clause: ' + e.getMessage());
-    //     }
-    // }
+    /**
+     * Generate AI-powered clause based on context
+     * @param region Geographic region (US, EU, APAC)
+     * @param role User role (Manager, Employee, Developer, Admin)
+     * @param contractType Type of contract (Employment, NDA, SLA)
+     * @return Generated clause text
+     */
     @AuraEnabled
     public static String generateClause(String region, String role, String contractType) {
         System.debug('Generating clause for: Region=' + region + ', Role=' + role + ', Type=' + contractType);
@@ -97,14 +74,9 @@ public class ClauseGenerator {
         }
     }
     
-    // private static String getBaseClause(String region, String contractType) {
-    //     if (CLAUSE_TEMPLATES.containsKey(region) && 
-    //         CLAUSE_TEMPLATES.get(region).containsKey(contractType)) {
-    //         return CLAUSE_TEMPLATES.get(region).get(contractType);
-    //     }
-    //     return 'This ' + contractType.toLowerCase() + ' agreement ';
-    // }
-
+    /**
+     * Get base clause template for region and contract type
+     */
     @TestVisible
     private static String getBaseClause(String region, String contractType) {
         if (CLAUSE_TEMPLATES.containsKey(region)) {
@@ -114,25 +86,9 @@ public class ClauseGenerator {
         return null;
     }
     
-    // private static String enhanceWithAI(String baseClause, String region, String role, String contractType) {
-    //     String enhancedClause = baseClause;
-        
-    //     // Add role-specific terms
-    //     if (ROLE_SPECIFIC_CLAUSES.containsKey(role)) {
-    //         enhancedClause += ROLE_SPECIFIC_CLAUSES.get(role);
-    //     }
-        
-    //     // Add contract type specifics
-    //     if (contractType == 'Employment') {
-    //         enhancedClause += 'Terms include compensation, benefits, confidentiality, and termination procedures.';
-    //     } else if (contractType == 'NDA') {
-    //         enhancedClause += 'Confidentiality obligations and non-disclosure terms apply.';
-    //     } else if (contractType == 'SLA') {
-    //         enhancedClause += 'Service level commitments and performance metrics are defined.';
-    //     }
-        
-    //     return enhancedClause;
-    // }
+    /**
+     * Enhance clause with AI-powered improvements
+     */
     @TestVisible
     private static String enhanceWithAI(String baseClause, String region, String role, String contractType) {
         try {
@@ -179,17 +135,9 @@ public class ClauseGenerator {
         }
     }
     
-    // public static List<String> generateClauseVariations(String region, String role, String contractType, Integer variationCount) {
-    //     List<String> variations = new List<String>();
-    //     String baseClause = generateClause(region, role, contractType);
-        
-    //     for (Integer i = 0; i < variationCount; i++) {
-    //         variations.add(generateClauseVariation(baseClause, i));
-    //     }
-        
-    //     return variations;
-    // }
-
+    /**
+     * Generate multiple clause variations for A/B testing
+     */
     @AuraEnabled
     public static List<String> generateClauseVariations(String region, String role, String contractType, Integer variationCount) {
         List<String> variations = new List<String>();
@@ -219,15 +167,9 @@ public class ClauseGenerator {
         return variations;
     }
     
-    // private static String generateClauseVariation(String baseClause, Integer variationType) {
-    //     // Generate different variations for A/B testing
-    //     switch on variationType {
-    //         when 0 { return baseClause + ' [Formal variation]'; }
-    //         when 1 { return baseClause + ' [Detailed variation]'; }
-    //         when else { return baseClause + ' [Standard variation]'; }
-    //     }
-    // }
-
+    /**
+     * Generate a single variation of the base clause
+     */
     @TestVisible
     private static String generateClauseVariation(String baseClause, Integer variationType) {
         String variation = baseClause;
@@ -254,143 +196,100 @@ public class ClauseGenerator {
         
         return variation;
     }
-
-    // public static Map<String, Object> getGenerationStatistics() {
-    //     List<AuditTrail__c> auditRecords = [
-    //         SELECT Action__c, AdditionalInfo__c, CreatedDate 
-    //         FROM AuditTrail__c 
-    //         WHERE Action__c = 'CLAUSE_GENERATED' 
-    //         ORDER BY CreatedDate DESC 
-    //         LIMIT 1000
-    //     ];
-        
-    //     Map<String, Object> stats = new Map<String, Object>();
-    //     stats.put('totalGenerations', auditRecords.size());
-    //     stats.put('successRate', calculateSuccessRate(auditRecords));
-        
-    //     return stats;
-    // }
     
+    /**
+     * Get clause generation statistics
+     */
     @AuraEnabled
     public static Map<String, Object> getGenerationStatistics() {
         Map<String, Object> stats = new Map<String, Object>();
         
-        try {
-            // Get audit trail statistics
-            List<AggregateResult> auditStats = [
-                SELECT 
-                    COUNT(Id) totalGenerations,
-                    COUNT_DISTINCT(UserDetails__c) uniqueUsers
-                FROM AuditTrail__c 
-                WHERE Action__c = 'CLAUSE_GENERATED'
-                AND CreatedDate = LAST_N_DAYS:30
-            ];
-            
-            if (!auditStats.isEmpty()) {
-                stats.put('totalGenerations', auditStats[0].get('totalGenerations'));
-                stats.put('uniqueUsers', auditStats[0].get('uniqueUsers'));
-            }
-            
-            // Get success rate
-            // List<AggregateResult> successStats = [
-            //     SELECT 
-            //         Status__c,
-            //         COUNT(Id) count
-            //     FROM AuditTrail__c 
-            //     WHERE Action__c = 'CLAUSE_GENERATED'
-            //     AND CreatedDate = LAST_N_DAYS:30
-            //     GROUP BY Status__c
-            // ];
-            List<AggregateResult> successStats = [
-                SELECT 
-                    Status__c,
-                    COUNT(Id) totalCount
-                FROM AuditTrail__c 
-                WHERE Action__c = 'CLAUSE_GENERATED'
-                AND CreatedDate = LAST_N_DAYS:30
-                GROUP BY Status__c
-            ];
-
-            Integer totalAttempts = 0;
-            Integer successfulAttempts = 0;
-            
-            for (AggregateResult result : successStats) {
-                Integer count = (Integer)result.get('count');
-                totalAttempts += count;
+            try {
+                // Get audit trail statistics
+                List<AggregateResult> auditStats = [
+                    SELECT 
+                        COUNT(Id) totalGenerations,
+                        COUNT_DISTINCT(UserDetails__c) uniqueUsers
+                    FROM AuditTrail__c 
+                    WHERE Action__c = 'CLAUSE_GENERATED'
+                    AND CreatedDate = LAST_N_DAYS:30
+                ];
                 
-                if ('SUCCESS'.equals(result.get('Status__c'))) {
-                    successfulAttempts += count;
+                if (!auditStats.isEmpty()) {
+                    stats.put('totalGenerations', auditStats[0].get('totalGenerations'));
+                    stats.put('uniqueUsers', auditStats[0].get('uniqueUsers'));
                 }
+                
+                // Get success rate
+                List<AggregateResult> successStats = [
+                    SELECT 
+                        Status__c,
+                        COUNT(Id) count
+                    FROM AuditTrail__c 
+                    WHERE Action__c = 'CLAUSE_GENERATED'
+                    AND CreatedDate = LAST_N_DAYS:30
+                    GROUP BY Status__c
+                ];
+                
+                Integer totalAttempts = 0;
+                Integer successfulAttempts = 0;
+                
+                for (AggregateResult result : successStats) {
+                    Integer count = (Integer)result.get('count');
+                    totalAttempts += count;
+                    
+                    if ('SUCCESS'.equals(result.get('Status__c'))) {
+                        successfulAttempts += count;
+                    }
+                }
+                
+                Decimal successRate = totalAttempts > 0 ? 
+                    (Decimal.valueOf(successfulAttempts) / Decimal.valueOf(totalAttempts)) * 100 : 0;
+                
+                stats.put('successRate', successRate);
+                stats.put('totalAttempts', totalAttempts);
+                stats.put('lastUpdated', DateTime.now());
+                
+                System.debug('✓ Generation statistics calculated: ' + stats);
+                
+            } catch (Exception e) {
+                System.debug('✗ Statistics calculation failed: ' + e.getMessage());
+                stats.put('error', e.getMessage());
             }
             
-            Decimal successRate = totalAttempts > 0 ? 
-                (Decimal.valueOf(successfulAttempts) / Decimal.valueOf(totalAttempts)) * 100 : 0;
-            
-            stats.put('successRate', successRate);
-            stats.put('totalAttempts', totalAttempts);
-            stats.put('lastUpdated', DateTime.now());
-            
-            System.debug('✓ Generation statistics calculated: ' + stats);
-            
-        } catch (Exception e) {
-            System.debug('✗ Statistics calculation failed: ' + e.getMessage());
-            stats.put('error', e.getMessage());
+            return stats;
         }
         
-        return stats;
-    }
-
-    private static Decimal calculateSuccessRate(List<AuditTrail__c> records) {
-        if (records.isEmpty()) return 0;
-        
-        Integer successCount = 0;
-        for (AuditTrail__c record : records) {
-            if (record.AdditionalInfo__c != null && record.AdditionalInfo__c.contains('SUCCESS')) {
-                successCount++;
+        /**
+         * Log clause generation activity
+         */
+        @TestVisible
+        private static void logClauseGeneration(String region, String role, String contractType, String status, Integer clauseLength) {
+            try {
+                AuditTrail__c auditLog = new AuditTrail__c(
+                    Action__c = 'CLAUSE_GENERATED',
+                    Status__c = status,
+                    Timestamp__c = DateTime.now(),
+                    UserDetails__c = UserInfo.getName() + ' (' + UserInfo.getUsername() + ')',
+                    SystemInfo__c = 'Generated clause for ' + region + ' ' + role + ' ' + contractType,
+                    AdditionalData__c = JSON.serialize(new Map<String, Object>{
+                        'region' => region,
+                        'role' => role,
+                        'contractType' => contractType,
+                        'clauseLength' => clauseLength,
+                        'timestamp' => DateTime.now().format(),
+                        'userId' => UserInfo.getUserId()
+                    })
+                );
+                
+                insert auditLog;
+            } catch (Exception e) {
+                System.debug('⚠ Could not log clause generation: ' + e.getMessage());
             }
         }
         
-        return (Decimal.valueOf(successCount) / records.size()) * 100;
+        /**
+         * Custom exception for clause generation errors
+         */
+        public class ClauseGenerationException extends Exception {}
     }
-    
-    // private static void logClauseGeneration(String region, String role, String contractType, String status, Integer clauseLength) {
-    //     AuditTrail__c audit = new AuditTrail__c(
-    //         Action__c = 'CLAUSE_GENERATED',
-    //         Timestamp__c = DateTime.now(),
-    //         UserDetails__c = UserInfo.getUserName(),
-    //         AdditionalInfo__c = 'Region: ' + region + 
-    //                             ', Role: ' + role + 
-    //                             ', Type: ' + contractType + 
-    //                             ', Status: ' + status + 
-    //                             ', Length: ' + clauseLength
-    //     );
-    //     insert audit;
-    // }
-    
-    @TestVisible
-    private static void logClauseGeneration(String region, String role, String contractType, String status, Integer clauseLength) {
-        try {
-            AuditTrail__c auditLog = new AuditTrail__c(
-                Action__c = 'CLAUSE_GENERATED',
-                Status__c = status,
-                Timestamp__c = DateTime.now(),
-                UserDetails__c = UserInfo.getName() + ' (' + UserInfo.getUsername() + ')',
-                SystemInfo__c = 'Generated clause for ' + region + ' ' + role + ' ' + contractType,
-                AdditionalData__c = JSON.serialize(new Map<String, Object>{
-                    'region' => region,
-                    'role' => role,
-                    'contractType' => contractType,
-                    'clauseLength' => clauseLength,
-                    'timestamp' => DateTime.now().format(),
-                    'userId' => UserInfo.getUserId()
-                })
-            );
-            
-            insert auditLog;
-        } catch (Exception e) {
-            System.debug('⚠ Could not log clause generation: ' + e.getMessage());
-        }
-    }
-    
-    public class ClauseGenerationException extends Exception {}
-}

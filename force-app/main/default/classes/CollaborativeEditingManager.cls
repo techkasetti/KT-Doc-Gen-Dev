@@ -1,6 +1,3 @@
-// COLLABORATIVE EDITING CONFLICT RESOLUTION
-// ===================================
-
 public class CollaborativeEditingManager {
     
     // Real-time conflict detection and resolution
@@ -84,51 +81,26 @@ public class CollaborativeEditingManager {
         insert editOp;
     }
 
-    // private static List<EditingOperation__c> detectConflicts(EditingOperation__c newOp, OperationalTransformState__c otState) {
-    //     // Find overlapping operations from other users
-    //     return [
-    //         SELECT Id, Operation_Type__c, Operation_Position__c, Operation_Length__c, 
-    //                User__c, Operation_Content__c, Operation_JSON__c
-    //         FROM EditingOperation__c 
-    //         WHERE Collaborative_Session__c = :newOp.Collaborative_Session__c
-    //         AND User__c != :newOp.User__c
-    //         AND Operation_Status__c IN ('PENDING_TRANSFORM', 'APPLIED')
-    //         AND Server_Revision__c > (:newOp.Client_Revision__c - 10) // Check recent operations
-    //         AND (
-    //             (Operation_Position__c <= :newOp.Operation_Position__c 
-    //              AND (Operation_Position__c + Operation_Length__c) > :newOp.Operation_Position__c)
-    //             OR 
-    //             (Operation_Position__c < (:newOp.Operation_Position__c + newOp.Operation_Length__c)
-    //              AND Operation_Position__c >= :newOp.Operation_Position__c)
-    //         )
-    //         ORDER BY Operation_Timestamp__c DESC
-    //     ];
-    // }
     private static List<EditingOperation__c> detectConflicts(EditingOperation__c newOp, OperationalTransformState__c otState) {
-        // Precompute values to avoid inline arithmetic in SOQL
-        Integer recentThreshold = newOp.Client_Revision__c - 10;
-        Integer newOpEnd = newOp.Operation_Position__c + newOp.Operation_Length__c;
-
         // Find overlapping operations from other users
         return [
             SELECT Id, Operation_Type__c, Operation_Position__c, Operation_Length__c, 
-                User__c, Operation_Content__c, Operation_JSON__c
+                   User__c, Operation_Content__c, Operation_JSON__c
             FROM EditingOperation__c 
             WHERE Collaborative_Session__c = :newOp.Collaborative_Session__c
             AND User__c != :newOp.User__c
             AND Operation_Status__c IN ('PENDING_TRANSFORM', 'APPLIED')
-            AND Server_Revision__c > :recentThreshold
+            AND Server_Revision__c > (:newOp.Client_Revision__c - 10) // Check recent operations
             AND (
                 (Operation_Position__c <= :newOp.Operation_Position__c 
-                AND Operation_Position__c + Operation_Length__c > :newOp.Operation_Position__c)
+                 AND (Operation_Position__c + Operation_Length__c) > :newOp.Operation_Position__c)
                 OR 
-                (Operation_Position__c < :newOpEnd
-                AND Operation_Position__c >= :newOp.Operation_Position__c)
+                (Operation_Position__c < (:newOp.Operation_Position__c + newOp.Operation_Length__c)
+                 AND Operation_Position__c >= :newOp.Operation_Position__c)
             )
             ORDER BY Operation_Timestamp__c DESC
         ];
     }
-
 
     private static void createConflictResolutionRecords(EditingOperation__c newOp, List<EditingOperation__c> conflicts, OperationalTransformState__c otState) {
         List<EditingConflict__c> conflictRecords = new List<EditingConflict__c>();
@@ -346,283 +318,284 @@ public class CollaborativeEditingManager {
 
     private static String generateResolutionOptions(EditingConflict__c conflict) {
         Map<String, Object> options = new Map<String, Object>{
-            'acceptPrimary' => new Map<String, Object>{
-                'label' => 'Accept Primary User\'s Changes',
-                'description' => 'Keep the changes made by the primary user and discard conflicting changes',
-                'action' => 'ACCEPT_PRIMARY_OPERATION'
-            },
-            'acceptConflicting' => new Map<String, Object>{
-                'label' => 'Accept Conflicting User\'s Changes',
-                'description' => 'Keep the changes made by the conflicting user and discard primary changes',
-                'action' => 'ACCEPT_CONFLICTING_OPERATION'
-            },
-            'mergeChanges' => new Map<String, Object>{
-                'label' => 'Merge Both Changes',
-                'description' => 'Attempt to intelligently merge both sets of changes',
-                'action' => 'MERGE_OPERATIONS',
-                'available' => conflict.Conflict_Type__c != 'CONCURRENT_DELETE'
-            },
-            'manualEdit' => new Map<String, Object>{
-                'label' => 'Manual Edit',
-                'description' => 'Manually edit the conflicted section',
-                'action' => 'MANUAL_RESOLUTION'
-            },
-            'revertToVersion' => new Map<String, Object>{
-                'label' => 'Revert to Previous Version',
-                'description' => 'Revert this section to a previous stable version',
-                'action' => 'REVERT_TO_STABLE'
-            }
-        };
-
-        return JSON.serialize(options);
+    'acceptPrimary' => new Map<String, Object>{
+        'label' => 'Accept Primary User\'s Changes',
+        'description' => 'Keep the changes made by the primary user and discard conflicting changes',
+        'action' => 'ACCEPT_PRIMARY_OPERATION'
+    },
+    'acceptConflicting' => new Map<String, Object>{
+        'label' => 'Accept Conflicting User\'s Changes',
+        'description' => 'Keep the changes made by the conflicting user and discard primary changes',
+        'action' => 'ACCEPT_CONFLICTING_OPERATION'
+    },
+    'mergeChanges' => new Map<String, Object>{
+        'label' => 'Merge Both Changes',
+        'description' => 'Attempt to intelligently merge both sets of changes',
+        'action' => 'MERGE_OPERATIONS',
+        'available' => conflict.Conflict_Type__c != 'CONCURRENT_DELETE'
+    },
+    'manualEdit' => new Map<String, Object>{
+        'label' => 'Manual Edit',
+        'description' => 'Manually edit the conflicted section',
+        'action' => 'MANUAL_RESOLUTION'
+    },
+    'revertToVersion' => new Map<String, Object>{
+        'label' => 'Revert to Previous Version',
+        'description' => 'Revert this section to a previous stable version',
+        'action' => 'REVERT_TO_STABLE'
     }
+};
 
-    private static Map<String, Object> mergeNonOverlappingOperations(EditingOperation__c op1, EditingOperation__c op2) {
-        Map<String, Object> op1Data = (Map<String, Object>)JSON.deserializeUntyped(op1.Operation_JSON__c);
-        Map<String, Object> op2Data = (Map<String, Object>)JSON.deserializeUntyped(op2.Operation_JSON__c);
-        
-        // Adjust positions based on operation order
-        Integer pos1 = (Integer)op1Data.get('position');
-        Integer pos2 = (Integer)op2Data.get('position');
-        
-        List<Map<String, Object>> mergedOps = new List<Map<String, Object>>();
-        
-        if (pos1 < pos2) {
-            mergedOps.add(op1Data);
-            // Adjust second operation position if first was an insert
-            if ((String)op1Data.get('type') == 'INSERT') {
-                op2Data.put('position', pos2 + ((String)op1Data.get('content')).length());
-            }
-            mergedOps.add(op2Data);
-        } else {
-            mergedOps.add(op2Data);
-            // Adjust first operation position if second was an insert
-            if ((String)op2Data.get('type') == 'INSERT') {
-                op1Data.put('position', pos1 + ((String)op2Data.get('content')).length());
-            }
-            mergedOps.add(op1Data);
+return JSON.serialize(options);
+}
+
+private static Map<String, Object> mergeNonOverlappingOperations(EditingOperation__c op1, EditingOperation__c op2) {
+    Map<String, Object> op1Data = (Map<String, Object>)JSON.deserializeUntyped(op1.Operation_JSON__c);
+    Map<String, Object> op2Data = (Map<String, Object>)JSON.deserializeUntyped(op2.Operation_JSON__c);
+    
+    // Adjust positions based on operation order
+    Integer pos1 = (Integer)op1Data.get('position');
+    Integer pos2 = (Integer)op2Data.get('position');
+    
+    List<Map<String, Object>> mergedOps = new List<Map<String, Object>>();
+    
+    if (pos1 < pos2) {
+        mergedOps.add(op1Data);
+        // Adjust second operation position if first was an insert
+        if ((String)op1Data.get('type') == 'INSERT') {
+            op2Data.put('position', pos2 + ((String)op1Data.get('content')).length());
         }
-        
-        return new Map<String, Object>{
-            'type' => 'COMPOSITE_OPERATION',
-            'operations' => mergedOps,
-            'resolutionMethod' => 'AUTO_MERGE_NON_OVERLAPPING'
-        };
-    }
-
-    private static Map<String, Object> mergeFormattingOperations(EditingOperation__c op1, EditingOperation__c op2) {
-        Map<String, Object> op1Data = (Map<String, Object>)JSON.deserializeUntyped(op1.Operation_JSON__c);
-        Map<String, Object> op2Data = (Map<String, Object>)JSON.deserializeUntyped(op2.Operation_JSON__c);
-        
-        Map<String, Object> mergedFormat = new Map<String, Object>();
-        
-        // Merge formatting attributes
-        Map<String, Object> format1 = (Map<String, Object>)op1Data.get('attributes');
-        Map<String, Object> format2 = (Map<String, Object>)op2Data.get('attributes');
-        
-        if (format1 != null) mergedFormat.putAll(format1);
-        if (format2 != null) mergedFormat.putAll(format2);
-        
-        return new Map<String, Object>{
-            'type' => 'FORMAT',
-            'position' => Math.min((Integer)op1Data.get('position'), (Integer)op2Data.get('position')),
-            'length' => Math.max((Integer)op1Data.get('length'), (Integer)op2Data.get('length')),
-            'attributes' => mergedFormat,
-            'resolutionMethod' => 'AUTO_MERGE_FORMATTING'
-        };
-    }
-
-    private static void applyResolvedOperation(EditingOperation__c resolvedOp) {
-        Map<String, Object> opData = (Map<String, Object>)JSON.deserializeUntyped(resolvedOp.Operation_JSON__c);
-        
-        // Update document state
-        DocumentCollaborativeState__c docState = [
-            SELECT Id, Current_Content__c, Content_Hash__c, Last_Modified__c
-            FROM DocumentCollaborativeState__c 
-            WHERE Collaborative_Session__c = :resolvedOp.Collaborative_Session__c 
-            LIMIT 1
-        ];
-        
-        // Apply operation to document content
-        String newContent = applyOperationToContent(docState.Current_Content__c, opData);
-        
-        docState.Current_Content__c = newContent;
-        docState.Content_Hash__c = generateContentHash(newContent);
-        docState.Last_Modified__c = DateTime.now();
-        
-        update docState;
-        
-        // Broadcast change to all active collaborators
-        broadcastOperationToCollaborators(resolvedOp);
-    }
-
-    private static String applyOperationToContent(String content, Map<String, Object> operation) {
-        String opType = (String)operation.get('type');
-        Integer position = (Integer)operation.get('position');
-        
-        if (opType == 'INSERT') {
-            String insertContent = (String)operation.get('content');
-            return content.substring(0, position) + insertContent + content.substring(position);
-        } else if (opType == 'DELETE') {
-            Integer length = (Integer)operation.get('length');
-            return content.substring(0, position) + content.substring(position + length);
-        } else if (opType == 'COMPOSITE_OPERATION') {
-            List<Object> operations = (List<Object>)operation.get('operations');
-            String workingContent = content;
-            for (Object op : operations) {
-                workingContent = applyOperationToContent(workingContent, (Map<String, Object>)op);
-            }
-            return workingContent;
+        mergedOps.add(op2Data);
+    } else {
+        mergedOps.add(op2Data);
+        // Adjust first operation position if second was an insert
+        if ((String)op2Data.get('type') == 'INSERT') {
+            op1Data.put('position', pos1 + ((String)op2Data.get('content')).length());
         }
-        
-        return content; // No change for other operation types
+        mergedOps.add(op1Data);
     }
+    
+    return new Map<String, Object>{
+        'type' => 'COMPOSITE_OPERATION',
+        'operations' => mergedOps,
+        'resolutionMethod' => 'AUTO_MERGE_NON_OVERLAPPING'
+    };
+}
 
-    private static void broadcastOperationToCollaborators(EditingOperation__c operation) {
-        // Get all active collaborators
-        List<CollaborativeSessionParticipant__c> participants = [
-            SELECT Id, User__c, Connection_Id__c, Last_Activity__c
-            FROM CollaborativeSessionParticipant__c
-            WHERE Collaborative_Session__c = :operation.Collaborative_Session__c
-            AND Status__c = 'ACTIVE'
-            AND Last_Activity__c > :DateTime.now().addMinutes(-30)
-        ];
-        
-        // Create broadcast messages
-        List<OperationBroadcast__c> broadcasts = new List<OperationBroadcast__c>();
-        for (CollaborativeSessionParticipant__c participant : participants) {
-            broadcasts.add(new OperationBroadcast__c(
-                Participant__c = participant.Id,
-                Operation__c = operation.Id,
-                Message_Type__c = 'OPERATION_APPLIED',
-                Broadcast_Status__c = 'PENDING',
-                Message_JSON__c = operation.Operation_JSON__c,
-                Created_Date__c = DateTime.now(),
-                Priority__c = 'HIGH'
-            ));
+private static Map<String, Object> mergeFormattingOperations(EditingOperation__c op1, EditingOperation__c op2) {
+    Map<String, Object> op1Data = (Map<String, Object>)JSON.deserializeUntyped(op1.Operation_JSON__c);
+    Map<String, Object> op2Data = (Map<String, Object>)JSON.deserializeUntyped(op2.Operation_JSON__c);
+    
+    Map<String, Object> mergedFormat = new Map<String, Object>();
+    
+    // Merge formatting attributes
+    Map<String, Object> format1 = (Map<String, Object>)op1Data.get('attributes');
+    Map<String, Object> format2 = (Map<String, Object>)op2Data.get('attributes');
+    
+    if (format1 != null) mergedFormat.putAll(format1);
+    if (format2 != null) mergedFormat.putAll(format2);
+    
+    return new Map<String, Object>{
+        'type' => 'FORMAT',
+        'position' => Math.min((Integer)op1Data.get('position'), (Integer)op2Data.get('position')),
+        'length' => Math.max((Integer)op1Data.get('length'), (Integer)op2Data.get('length')),
+        'attributes' => mergedFormat,
+        'resolutionMethod' => 'AUTO_MERGE_FORMATTING'
+    };
+}
+
+private static void applyResolvedOperation(EditingOperation__c resolvedOp) {
+    Map<String, Object> opData = (Map<String, Object>)JSON.deserializeUntyped(resolvedOp.Operation_JSON__c);
+    
+    // Update document state
+    DocumentCollaborativeState__c docState = [
+        SELECT Id, Current_Content__c, Content_Hash__c, Last_Modified__c
+        FROM DocumentCollaborativeState__c 
+        WHERE Collaborative_Session__c = :resolvedOp.Collaborative_Session__c 
+        LIMIT 1
+    ];
+    
+    // Apply operation to document content
+    String newContent = applyOperationToContent(docState.Current_Content__c, opData);
+    
+    docState.Current_Content__c = newContent;
+    docState.Content_Hash__c = generateContentHash(newContent);
+    docState.Last_Modified__c = DateTime.now();
+    
+    update docState;
+    
+    // Broadcast change to all active collaborators
+    broadcastOperationToCollaborators(resolvedOp);
+}
+
+private static String applyOperationToContent(String content, Map<String, Object> operation) {
+    String opType = (String)operation.get('type');
+    Integer position = (Integer)operation.get('position');
+    
+    if (opType == 'INSERT') {
+        String insertContent = (String)operation.get('content');
+        return content.substring(0, position) + insertContent + content.substring(position);
+    } else if (opType == 'DELETE') {
+        Integer length = (Integer)operation.get('length');
+        return content.substring(0, position) + content.substring(position + length);
+    } else if (opType == 'COMPOSITE_OPERATION') {
+        List<Object> operations = (List<Object>)operation.get('operations');
+        String workingContent = content;
+        for (Object op : operations) {
+            workingContent = applyOperationToContent(workingContent, (Map<String, Object>)op);
         }
-        insert broadcasts;
-        
-        // Send real-time notifications (integrate with WebSocket/Server-Sent Events)
-        RealTimeNotificationService.broadcastToConnections(broadcasts);
+        return workingContent;
     }
+    
+    return content; // No change for other operation types
+}
 
-    // Advanced conflict prevention through smart locking
-    public static void implementSmartLocking(String sessionId, String userId, String sectionId) {
-        // Create or update section lock
-        DocumentSectionLock__c sectionLock = new DocumentSectionLock__c();
-        
-        try {
-            sectionLock = [
-                SELECT Id, Lock_Status__c, Locked_By__c, Lock_Expiry__c
-                FROM DocumentSectionLock__c
-                WHERE Collaborative_Session__c = :sessionId
-                AND Section_Identifier__c = :sectionId
-                LIMIT 1
-            ];
-            
-            if (sectionLock.Lock_Status__c == 'LOCKED' && sectionLock.Locked_By__c != userId) {
-                // Section already locked by another user
-                throw new ConflictException('Section is currently being edited by another user');
-            }
-            
-        } catch (QueryException e) {
-            // Lock doesn't exist, create new one
-            sectionLock = new DocumentSectionLock__c(
-                Collaborative_Session__c = sessionId,
-                Section_Identifier__c = sectionId
-            );
-        }
-        
-        // Update lock details
-        sectionLock.Lock_Status__c = 'LOCKED';
-        sectionLock.Locked_By__c = userId;
-        sectionLock.Lock_Type__c = 'OPTIMISTIC'; // OPTIMISTIC, PESSIMISTIC
-        sectionLock.Lock_Acquired__c = DateTime.now();
-        sectionLock.Lock_Expiry__c = DateTime.now().addMinutes(15); // Auto-expire in 15 minutes
-        sectionLock.Auto_Release__c = true;
-        sectionLock.Lock_Reason__c = 'USER_EDITING';
-        
-        upsert sectionLock;
-        
-        // Schedule automatic lock release
-        scheduleAutomaticLockRelease(sectionLock.Id);
+private static void broadcastOperationToCollaborators(EditingOperation__c operation) {
+    // Get all active collaborators
+    List<CollaborativeSessionParticipant__c> participants = [
+        SELECT Id, User__c, Connection_Id__c, Last_Activity__c
+        FROM CollaborativeSessionParticipant__c
+        WHERE Collaborative_Session__c = :operation.Collaborative_Session__c
+        AND Status__c = 'ACTIVE'
+        AND Last_Activity__c > :DateTime.now().addMinutes(-30)
+    ];
+    
+    // Create broadcast messages
+    List<OperationBroadcast__c> broadcasts = new List<OperationBroadcast__c>();
+    for (CollaborativeSessionParticipant__c participant : participants) {
+        broadcasts.add(new OperationBroadcast__c(
+            Participant__c = participant.Id,
+            Operation__c = operation.Id,
+            Message_Type__c = 'OPERATION_APPLIED',
+            Broadcast_Status__c = 'PENDING',
+            Message_JSON__c = operation.Operation_JSON__c,
+            Created_Date__c = DateTime.now(),
+            Priority__c = 'HIGH'
+        ));
     }
+    insert broadcasts;
+    
+    // Send real-time notifications (integrate with WebSocket/Server-Sent Events)
+    RealTimeNotificationService.broadcastToConnections(broadcasts);
+}
 
-    @future
-    public static void scheduleAutomaticLockRelease(String lockId) {
-        DocumentSectionLock__c lock = [
-            SELECT Id, Lock_Expiry__c, Auto_Release__c
+// Advanced conflict prevention through smart locking
+public static void implementSmartLocking(String sessionId, String userId, String sectionId) {
+    // Create or update section lock
+    DocumentSectionLock__c sectionLock = new DocumentSectionLock__c();
+    
+    try {
+        sectionLock = [
+            SELECT Id, Lock_Status__c, Locked_By__c, Lock_Expiry__c
             FROM DocumentSectionLock__c
-            WHERE Id = :lockId
+            WHERE Collaborative_Session__c = :sessionId
+            AND Section_Identifier__c = :sectionId
             LIMIT 1
         ];
         
-        if (lock.Auto_Release__c && DateTime.now() > lock.Lock_Expiry__c) {
-            lock.Lock_Status__c = 'RELEASED';
-            lock.Released_Date__c = DateTime.now();
-            lock.Release_Reason__c = 'AUTO_EXPIRED';
-            update lock;
-        }
-    }
-
-    // Utility methods
-    private static String generateDocumentHash(String sessionId) {
-        // Generate hash of current document state
-        return EncodingUtil.convertToHex(Crypto.generateDigest('SHA256', Blob.valueOf(sessionId + String.valueOf(DateTime.now()))));
-    }
-
-    private static String generateContentHash(String content) {
-        return EncodingUtil.convertToHex(Crypto.generateDigest('SHA256', Blob.valueOf(content)));
-    }
-
-    private static Integer calculateOverlapLength(EditingOperation__c op1, EditingOperation__c op2) {
-        Integer start1 = op1.Operation_Position__c;
-        Integer end1 = start1 + (op1.Operation_Length__c != null ? op1.Operation_Length__c : 0);
-        Integer start2 = op2.Operation_Position__c;
-        Integer end2 = start2 + (op2.Operation_Length__c != null ? op2.Operation_Length__c : 0);
-        
-        Integer overlapStart = Math.max(start1, start2);
-        Integer overlapEnd = Math.min(end1, end2);
-        
-        return Math.max(0, overlapEnd - overlapStart);
-    }
-
-    private static String calculateContentSimilarity(String content1, String content2) {
-        if (String.isEmpty(content1) || String.isEmpty(content2)) return 'LOW';
-        
-        // Simple similarity calculation - in production, use more sophisticated algorithms
-        Integer minLength = Math.min(content1.length(), content2.length());
-        Integer maxLength = Math.max(content1.length(), content2.length());
-        
-        if (minLength == 0) return 'LOW';
-        
-        Double similarity = (Double)minLength / maxLength;
-        
-        if (similarity > 0.8) return 'HIGH';
-        if (similarity > 0.5) return 'MEDIUM';
-        return 'LOW';
-    }
-
-    private static void applyOperationDirectly(EditingOperation__c operation, OperationalTransformState__c otState) {
-        operation.Operation_Status__c = 'APPLIED';
-        
-        // Update operational transform state
-        otState.Current_Revision__c += 1;
-        
-        // Update operation queue
-        List<Object> operationQueue = (List<Object>)JSON.deserializeUntyped(otState.Operation_Queue_JSON__c);
-        operationQueue.add(JSON.deserializeUntyped(operation.Operation_JSON__c));
-        
-        // Keep only last 100 operations in queue
-        if (operationQueue.size() > 100) {
-            operationQueue = operationQueue.subList(operationQueue.size() - 100, operationQueue.size());
+        if (sectionLock.Lock_Status__c == 'LOCKED' && sectionLock.Locked_By__c != userId) {
+            // Section already locked by another user
+            throw new ConflictException('Section is currently being edited by another user');
         }
         
-        otState.Operation_Queue_JSON__c = JSON.serialize(operationQueue);
-        update otState;
+    } catch (QueryException e) {
+        // Lock doesn't exist, create new one
+        sectionLock = new DocumentSectionLock__c(
+            Collaborative_Session__c = sessionId,
+            Section_Identifier__c = sectionId
+        );
     }
+    
+    // Update lock details
+    sectionLock.Lock_Status__c = 'LOCKED';
+    sectionLock.Locked_By__c = userId;
+    sectionLock.Lock_Type__c = 'OPTIMISTIC'; // OPTIMISTIC, PESSIMISTIC
+    sectionLock.Lock_Acquired__c = DateTime.now();
+    sectionLock.Lock_Expiry__c = DateTime.now().addMinutes(15); // Auto-expire in 15 minutes
+    sectionLock.Auto_Release__c = true;
+    sectionLock.Lock_Reason__c = 'USER_EDITING';
+    
+    upsert sectionLock;
+    
+    // Schedule automatic lock release
+    scheduleAutomaticLockRelease(sectionLock.Id);
+}
 
-    // Exception classes
-    public class ConflictException extends Exception {}
+@future
+public static void scheduleAutomaticLockRelease(String lockId) {
+    DocumentSectionLock__c lock = [
+        SELECT Id, Lock_Expiry__c, Auto_Release__c
+        FROM DocumentSectionLock__c
+        WHERE Id = :lockId
+        LIMIT 1
+    ];
+    
+    if (lock.Auto_Release__c && DateTime.now() > lock.Lock_Expiry__c) {
+        lock.Lock_Status__c = 'RELEASED';
+        lock.Released_Date__c = DateTime.now();
+        lock.Release_Reason__c = 'AUTO_EXPIRED';
+        update lock;
+    }
+}
+
+// Utility methods
+private static String generateDocumentHash(String sessionId) {
+    // Generate hash of current document state
+    return EncodingUtil.convertToHex(Crypto.generateDigest('SHA256', Blob.valueOf(sessionId + String.valueOf(DateTime.now()))));
+}
+
+private static String generateContentHash(String content) {
+    return EncodingUtil.convertToHex(Crypto.generateDigest('SHA256', Blob.valueOf(content)));
+}
+
+private static Integer calculateOverlapLength(EditingOperation__c op1, EditingOperation__c op2) {
+    Integer start1 = op1.Operation_Position__c;
+    Integer end1 = start1 + (op1.Operation_Length__c != null ? op1.Operation_Length__c : 0);
+    Integer start2 = op2.Operation_Position__c;
+    Integer end2 = start2 + (op2.Operation_Length__c != null ? op2.Operation_Length__c : 0);
+    
+    Integer overlapStart = Math.max(start1, start2);
+    Integer overlapEnd = Math.min(end1, end2);
+    
+    return Math.max(0, overlapEnd - overlapStart);
+}
+
+private static String calculateContentSimilarity(String content1, String content2) {
+    if (String.isEmpty(content1) || String.isEmpty(content2)) return 'LOW';
+    
+    // Simple similarity calculation - in production, use more sophisticated algorithms
+    Integer minLength = Math.min(content1.length(), content2.length());
+    Integer maxLength = Math.max(content1.length(), content2.length());
+    
+    if (minLength == 0) return 'LOW';
+    
+    Double similarity = (Double)minLength / maxLength;
+    
+    if (similarity > 0.8) return 'HIGH';
+    if (similarity > 0.5) return 'MEDIUM';
+    return 'LOW';
+}
+
+private static void applyOperationDirectly(EditingOperation__c operation, OperationalTransformState__c otState) {
+    operation.Operation_Status__c = 'APPLIED';
+    
+    // Update operational transform state
+    otState.Current_Revision__c += 1;
+    
+    // Update operation queue
+    List<Object> operationQueue = (List<Object>)JSON.deserializeUntyped(otState.Operation_Queue_JSON__c);
+    operationQueue.add(JSON.deserializeUntyped(operation.Operation_JSON__c));
+    
+    // Keep only last 100 operations in queue
+    if (operationQueue.size() > 100) {
+        operationQueue = operationQueue.subList(operationQueue.size() - 100, operationQueue.size());
+    }
+    
+    otState.Operation_Queue_JSON__c = JSON.serialize(operationQueue);
+    update otState;
+}
+
+// Exception classes
+public class ConflictException extends Exception {}
+
 }

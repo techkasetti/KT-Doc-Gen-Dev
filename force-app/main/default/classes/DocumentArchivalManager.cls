@@ -1,7 +1,3 @@
-// ===================================
-// DOCUMENT ARCHIVAL & RETENTION SYSTEM
-// ===================================
-
 public class DocumentArchivalManager {
     
     // Retention policy engine
@@ -11,56 +7,56 @@ public class DocumentArchivalManager {
         
         // GDPR-compliant retention policy
         policies.add(new DocumentRetentionPolicy__c(
-            Policy_Name__c                  = 'GDPR_Personal_Data_Retention',
-            Document_Type__c                = 'DATA_PROCESSING_AGREEMENT',
-            Retention_Period_Years__c       = 7,
-            Retention_Period_Days__c        = 2555, // 7 years
-            Geographic_Scope__c             = 'EU;EEA',
-            Legal_Basis__c                  = 'GDPR Article 17 - Right to Erasure',
-            Auto_Delete_Enabled__c          = true,
-            Pre_Deletion_Review__c          = true,
-            Deletion_Approval_Required__c   = true,
-            Archive_Before_Deletion__c      = true,
-            Archive_Location__c             = 'SECURE_CLOUD_ARCHIVE',
-            Encryption_Required__c          = true,
-            Access_Log_Required__c          = true,
+            Policy_Name__c = 'GDPR_Personal_Data_Retention',
+            Document_Type__c = 'DATA_PROCESSING_AGREEMENT',
+            Retention_Period_Years__c = 7,
+            Retention_Period_Days__c = 2555, // 7 years
+            Geographic_Scope__c = 'EU;EEA',
+            Legal_Basis__c = 'GDPR Article 17 - Right to Erasure',
+            Auto_Delete_Enabled__c = true,
+            Pre_Deletion_Review__c = true,
+            Deletion_Approval_Required__c = true,
+            Archive_Before_Deletion__c = true,
+            Archive_Location__c = 'SECURE_CLOUD_ARCHIVE',
+            Encryption_Required__c = true,
+            Access_Log_Required__c = true,
             Compliance_Officer_Notification__c = true
         ));
         
         // Financial records retention
         policies.add(new DocumentRetentionPolicy__c(
-            Policy_Name__c                  = 'Financial_Records_Retention_US',
-            Document_Type__c                = 'FINANCIAL_CONTRACT',
-            Retention_Period_Years__c       = 10,
-            Retention_Period_Days__c        = 3650,
-            Geographic_Scope__c             = 'US',
-            Legal_Basis__c                  = 'SOX Compliance - 15 USC 7213',
-            Auto_Delete_Enabled__c          = false, // Manual review required
-            Pre_Deletion_Review__c          = true,
-            Deletion_Approval_Required__c   = true,
-            Archive_Before_Deletion__c      = true,
-            Archive_Location__c             = 'IMMUTABLE_BLOCKCHAIN_STORAGE',
-            Encryption_Required__c          = true,
-            Access_Log_Required__c          = true,
-            Audit_Trail_Permanent__c        = true
+            Policy_Name__c = 'Financial_Records_Retention_US',
+            Document_Type__c = 'FINANCIAL_CONTRACT',
+            Retention_Period_Years__c = 10,
+            Retention_Period_Days__c = 3650,
+            Geographic_Scope__c = 'US',
+            Legal_Basis__c = 'SOX Compliance - 15 USC 7213',
+            Auto_Delete_Enabled__c = false, // Manual review required
+            Pre_Deletion_Review__c = true,
+            Deletion_Approval_Required__c = true,
+            Archive_Before_Deletion__c = true,
+            Archive_Location__c = 'IMMUTABLE_BLOCKCHAIN_STORAGE',
+            Encryption_Required__c = true,
+            Access_Log_Required__c = true,
+            Audit_Trail_Permanent__c = true
         ));
         
         // Healthcare records retention (HIPAA)
         policies.add(new DocumentRetentionPolicy__c(
-            Policy_Name__c                  = 'HIPAA_PHI_Retention_Policy',
-            Document_Type__c                = 'HEALTHCARE_AGREEMENT',
-            Retention_Period_Years__c       = 6,
-            Retention_Period_Days__c        = 2190,
-            Geographic_Scope__c             = 'US',
-            Legal_Basis__c                  = 'HIPAA 45 CFR 164.530(j)(2)',
-            Auto_Delete_Enabled__c          = false,
-            Pre_Deletion_Review__c          = true,
-            Deletion_Approval_Required__c   = true,
-            Archive_Before_Deletion__c      = true,
-            Archive_Location__c             = 'HIPAA_COMPLIANT_ARCHIVE',
-            Encryption_Required__c          = true,
-            PHI_Anonymization_Required__c   = true,
-            Access_Log_Required__c          = true
+            Policy_Name__c = 'HIPAA_PHI_Retention_Policy',
+            Document_Type__c = 'HEALTHCARE_AGREEMENT',
+            Retention_Period_Years__c = 6,
+            Retention_Period_Days__c = 2190,
+            Geographic_Scope__c = 'US',
+            Legal_Basis__c = 'HIPAA 45 CFR 164.530(j)(2)',
+            Auto_Delete_Enabled__c = false,
+            Pre_Deletion_Review__c = true,
+            Deletion_Approval_Required__c = true,
+            Archive_Before_Deletion__c = true,
+            Archive_Location__c = 'HIPAA_COMPLIANT_ARCHIVE',
+            Encryption_Required__c = true,
+            PHI_Anonymization_Required__c = true,
+            Access_Log_Required__c = true
         ));
         
         insert policies;
@@ -70,21 +66,20 @@ public class DocumentArchivalManager {
     }
     
     private static void createRetentionSchedules(List<DocumentRetentionPolicy__c> policies) {
-        
         List<DocumentRetentionSchedule__c> schedules = new List<DocumentRetentionSchedule__c>();
         
         for (DocumentRetentionPolicy__c policy : policies) {
             schedules.add(new DocumentRetentionSchedule__c(
-                Retention_Policy__c               = policy.Id,
-                Schedule_Name__c                  = policy.Policy_Name__c + '_Schedule',
-                Execution_Frequency__c            = 'MONTHLY',
-                Next_Execution_Date__c            = Date.today().addDays(30),
-                Last_Execution_Date__c            = null,
-                Documents_Processed_Last_Run__c   = 0,
-                Documents_Archived_Last_Run__c    = 0,
-                Documents_Deleted_Last_Run__c     = 0,
-                Schedule_Status__c                = 'ACTIVE',
-                Notification_Recipients__c        = 'compliance@company.com;legal@company.com',
+                Retention_Policy__c = policy.Id,
+                Schedule_Name__c = policy.Policy_Name__c + '_Schedule',
+                Execution_Frequency__c = 'MONTHLY',
+                Next_Execution_Date__c = Date.today().addDays(30),
+                Last_Execution_Date__c = null,
+                Documents_Processed_Last_Run__c = 0,
+                Documents_Archived_Last_Run__c = 0,
+                Documents_Deleted_Last_Run__c = 0,
+                Schedule_Status__c = 'ACTIVE',
+                Notification_Recipients__c = 'compliance@company.com;legal@company.com',
                 Pre_Execution_Approval_Required__c = true
             ));
         }
@@ -95,7 +90,6 @@ public class DocumentArchivalManager {
     // Intelligent archival process
     @future(callout=true)
     public static void executeRetentionPolicy(String policyId) {
-        
         DocumentRetentionPolicy__c policy = [
             SELECT Id, Policy_Name__c, Document_Type__c, Retention_Period_Days__c, 
                    Auto_Delete_Enabled__c, Archive_Before_Deletion__c, Archive_Location__c,
@@ -118,21 +112,20 @@ public class DocumentArchivalManager {
         List<DocumentArchivalRecord__c> archivalRecords = new List<DocumentArchivalRecord__c>();
         
         for (ContentDocument doc : documentsToProcess) {
-            
             // Create archival record
             DocumentArchivalRecord__c record = new DocumentArchivalRecord__c(
-                Document_Id__c               = doc.Id,
-                Document_Title__c            = doc.Title,
-                Original_Creation_Date__c    = doc.CreatedDate,
-                Archival_Date__c             = Date.today(),
-                Retention_Policy__c          = policy.Id,
-                Archive_Location__c          = policy.Archive_Location__c,
-                File_Size_MB__c              = (doc.ContentSize / 1024.0 / 1024.0),
-                Encryption_Applied__c        = policy.Encryption_Required__c,
-                Archive_Status__c            = 'PENDING_ARCHIVAL',
-                Legal_Hold_Check__c          = checkLegalHoldStatus(doc.Id),
-                Compliance_Verification__c   = 'PASSED',
-                Access_History_Preserved__c  = true
+                Document_Id__c = doc.Id,
+                Document_Title__c = doc.Title,
+                Original_Creation_Date__c = doc.CreatedDate,
+                Archival_Date__c = Date.today(),
+                Retention_Policy__c = policy.Id,
+                Archive_Location__c = policy.Archive_Location__c,
+                File_Size_MB__c = (doc.ContentSize / 1024.0 / 1024.0),
+                Encryption_Applied__c = policy.Encryption_Required__c,
+                Archive_Status__c = 'PENDING_ARCHIVAL',
+                Legal_Hold_Check__c = checkLegalHoldStatus(doc.Id),
+                Compliance_Verification__c = 'PASSED',
+                Access_History_Preserved__c = true
             );
             
             archivalRecords.add(record);
@@ -158,17 +151,15 @@ public class DocumentArchivalManager {
     
     private static Boolean checkLegalHoldStatus(String documentId) {
         Integer holdCount = [
-            SELECT COUNT()
-            FROM LegalHold__c
-            WHERE Status__c = 'ACTIVE'
-            AND Document_Scope__c = :documentId
+            SELECT COUNT() 
+            FROM LegalHold__c 
+            WHERE Status__c = 'ACTIVE' 
+            AND Document_Scope__c INCLUDES :documentId
         ];
-
         return holdCount > 0;
     }
     
     private static void archiveDocument(ContentDocument doc, DocumentRetentionPolicy__c policy) {
-        
         // Archive to specified location with encryption
         ArchiveService.archiveDocument(doc.Id, policy.Archive_Location__c, policy.Encryption_Required__c);
         
@@ -185,20 +176,19 @@ public class DocumentArchivalManager {
     }
     
     private static void updateRetentionScheduleStats(String policyId, Integer processedCount) {
-        
         DocumentRetentionSchedule__c schedule = [
-            SELECT Id, Documents_Processed_Last_Run__c, Last_Execution_Date__c,
-                   Documents_Archived_Last_Run__c, Next_Execution_Date__c
-            FROM DocumentRetentionSchedule__c 
-            WHERE Retention_Policy__c = :policyId 
-            LIMIT 1
-        ];
-        
-        schedule.Documents_Processed_Last_Run__c = processedCount;
-        schedule.Last_Execution_Date__c          = Date.today();
-        schedule.Next_Execution_Date__c          = Date.today().addDays(30);
-        schedule.Documents_Archived_Last_Run__c  = processedCount;
-        
-        update schedule;
-    }
+                    SELECT Id, Documents_Processed_Last_Run__c, Last_Execution_Date__c,
+               Documents_Archived_Last_Run__c, Next_Execution_Date__c
+        FROM DocumentRetentionSchedule__c 
+        WHERE Retention_Policy__c = :policyId 
+        LIMIT 1
+    ];
+    
+    schedule.Documents_Processed_Last_Run__c = processedCount;
+    schedule.Last_Execution_Date__c = Date.today();
+    schedule.Next_Execution_Date__c = Date.today().addDays(30);
+    schedule.Documents_Archived_Last_Run__c = processedCount;
+    
+    update schedule;
+}
 }

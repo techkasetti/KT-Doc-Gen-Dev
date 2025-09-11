@@ -1,372 +1,3 @@
-// import { LightningElement, track, wire } from 'lwc';
-// import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-// import generateClause from '@salesforce/apex/ClauseGenerator.generateClause';
-// import validateCompliance from '@salesforce/apex/ComplianceChecker.validateClause';
-// import getDetailedComplianceAnalysis from '@salesforce/apex/ComplianceChecker.getDetailedComplianceAnalysis';
-// import createDocumentRequest from '@salesforce/apex/DocumentGenerationController.createDocumentRequest';
-// import generateDocumentWithAI from '@salesforce/apex/DocumentGenerationController.generateDocumentWithAI';
-// import getDocumentTemplates from '@salesforce/apex/DocumentGenerationController.getDocumentTemplates';
-
-// export default class DocumentGenerator extends LightningElement {
-//     // Step Management
-//     @track currentStep = '1';
-    
-//     // Form Data
-//     @track selectedContractType = '';
-//     @track selectedRegion = '';
-//     @track selectedRole = '';
-//     @track selectedOutputFormat = 'PDF';
-//     @track selectedTemplate = '';
-//     @track additionalClauses = '';
-    
-//     // AI Enhancement Options
-//     @track selectedTone = 'professional';
-//     @track selectedLength = 'standard';
-//     @track aiProcessingEnabled = true;
-    
-//     // Generated Content
-//     @track generatedClause = '';
-//     @track complianceScore = 0;
-//     @track complianceStatusLabel = '';
-//     @track riskLevel = '';
-//     @track recommendations = [];
-    
-//     // UI State
-//     @track isGeneratingPreview = false;
-//     @track isGeneratingDocument = false;
-//     @track previewGenerated = false;
-//     @track finalDocumentGenerated = false;
-//     @track hasError = false;
-//     @track errorMessage = '';
-//     @track templateOptions = [];
-
-//     // Dropdown Options
-//     contractTypeOptions = [
-//         { label: 'Employment Contract', value: 'Employment' },
-//         { label: 'Non-Disclosure Agreement', value: 'NDA' },
-//         { label: 'Service Level Agreement', value: 'SLA' },
-//         { label: 'Service Agreement', value: 'Service' }
-//     ];
-
-//     regionOptions = [
-//         { label: 'United States', value: 'US' },
-//         { label: 'European Union', value: 'EU' },
-//         { label: 'Asia Pacific', value: 'APAC' },
-//         { label: 'Global', value: 'Global' }
-//     ];
-
-//     roleOptions = [
-//         { label: 'Manager', value: 'Manager' },
-//         { label: 'Employee', value: 'Employee' },
-//         { label: 'Developer', value: 'Developer' },
-//         { label: 'Administrator', value: 'Admin' }
-//     ];
-
-//     outputFormatOptions = [
-//         { label: 'PDF Document', value: 'PDF' },
-//         { label: 'Word Document', value: 'DOCX' },
-//         { label: 'HTML Page', value: 'HTML' }
-//     ];
-
-//     toneOptions = [
-//         { label: 'Professional', value: 'professional' },
-//         { label: 'Formal', value: 'formal' },
-//         { label: 'Friendly', value: 'friendly' },
-//         { label: 'Legal', value: 'legal' }
-//     ];
-
-//     lengthOptions = [
-//         { label: 'Concise', value: 'concise' },
-//         { label: 'Standard', value: 'standard' },
-//         { label: 'Detailed', value: 'detailed' },
-//         { label: 'Comprehensive', value: 'comprehensive' }
-//     ];
-
-//     // Computed Properties
-//     get isStep1() { 
-//         return this.currentStep === '1'; 
-//     }
-    
-//     get isStep2() { 
-//         return this.currentStep === '2'; 
-//     }
-    
-//     get isStep3() { 
-//         return this.currentStep === '3'; 
-//     }
-    
-//     get isStep4() { 
-//         return this.currentStep === '4'; 
-//     }
-
-//     get isPreviousDisabled() {
-//         return this.currentStep === '1';
-//     }
-
-//     get isNextDisabled() {
-//         if (this.currentStep === '1') {
-//             return !this.selectedContractType || !this.selectedRegion || !this.selectedRole;
-//         } else if (this.currentStep === '2') {
-//             return !this.selectedOutputFormat;
-//         } else if (this.currentStep === '3') {
-//             return false; // Always allow proceeding from step 3
-//         } else if (this.currentStep === '4') {
-//             return true; // No next button on final step
-//         }
-//         return false;
-//     }
-
-//     get nextButtonLabel() {
-//         return this.currentStep === '4' ? 'Generate' : 'Next';
-//     }
-
-//     get showContractTypeDescription() {
-//         return this.selectedContractType !== '';
-//     }
-
-//     // Based on the comprehensive analysis of all the DocGen implementation materials, I can continue the contractTypeDescription() function from where it left off. The function is designed to provide user-friendly descriptions for different contract types within the document generation system.
-//     get contractTypeDescription() {
-//         const descriptions = {
-//             'Employment': 'Employment contracts define the terms and conditions of employment, including compensation, benefits, confidentiality obligations, and termination procedures. Used for full-time, part-time, and contract workers.',
-//             'NDA': 'Non-Disclosure Agreements establish confidentiality obligations and non-disclosure terms to protect sensitive business information, trade secrets, and proprietary data shared between parties.',
-//             'SLA': 'Service Level Agreements define service level commitments, performance metrics, availability requirements, and remedies for service failures between service providers and clients.',
-//             'Service': 'Service Agreements outline the terms for professional services, deliverables, payment schedules, intellectual property rights, and performance expectations between service providers and clients.'
-//         };
-        
-//         return descriptions[this.selectedContractType] || 'Select a contract type to view its description.';
-//     }
-
-//     get complianceStatusClass() {
-//         if (this.complianceScore >= 80) {
-//             return 'slds-theme_success';
-//         } else if (this.complianceScore >= 60) {
-//             return 'slds-theme_warning';
-//         } else {
-//             return 'slds-theme_error';
-//         }
-//     }
-
-//     get hasRecommendations() {
-//         return this.recommendations && this.recommendations.length > 0;
-//     }
-
-//     // Event Handlers
-//     handleContractTypeChange(event) {
-//         this.selectedContractType = event.detail.value;
-//         this.loadTemplatesForContractType();
-//         this.clearError();
-//     }
-
-//     handleRegionChange(event) {
-//         this.selectedRegion = event.detail.value;
-//         this.loadTemplatesForContractType();
-//         this.clearError();
-//     }
-
-//     handleRoleChange(event) {
-//         this.selectedRole = event.detail.value;
-//         this.clearError();
-//     }
-
-//     handleOutputFormatChange(event) {
-//         this.selectedOutputFormat = event.detail.value;
-//     }
-
-//     handleTemplateChange(event) {
-//         this.selectedTemplate = event.detail.value;
-//     }
-
-//     handleAdditionalClausesChange(event) {
-//         this.additionalClauses = event.detail.value;
-//     }
-
-//     handleToneChange(event) {
-//         this.selectedTone = event.detail.value;
-//     }
-
-//     handleLengthChange(event) {
-//         this.selectedLength = event.detail.value;
-//     }
-
-//     handleAIProcessingChange(event) {
-//         this.aiProcessingEnabled = event.detail.checked;
-//     }
-
-//     // Navigation Methods
-//     handleNext() {
-//         if (this.currentStep === '1') {
-//             this.currentStep = '2';
-//         } else if (this.currentStep === '2') {
-//             this.currentStep = '3';
-//         } else if (this.currentStep === '3') {
-//             this.currentStep = '4';
-//         }
-//     }
-
-//     handlePrevious() {
-//         if (this.currentStep === '2') {
-//             this.currentStep = '1';
-//         } else if (this.currentStep === '3') {
-//             this.currentStep = '2';
-//         } else if (this.currentStep === '4') {
-//             this.currentStep = '3';
-//         }
-//     }
-
-//     // Document Generation Methods
-//     async handleGeneratePreview() {
-//         this.isGeneratingPreview = true;
-//         this.clearError();
-        
-//         try {
-//             const aiParameters = {
-//                 tone: this.selectedTone,
-//                 length: this.selectedLength,
-//                 aiProcessing: this.aiProcessingEnabled
-//             };
-            
-//             const result = await generateDocumentWithAI({
-//                 region: this.selectedRegion,
-//                 role: this.selectedRole,
-//                 contractType: this.selectedContractType,
-//                 aiParameters: aiParameters
-//             });
-            
-//             this.generatedClause = result.generatedClause;
-//             this.processComplianceAnalysis(result.complianceAnalysis);
-//             this.previewGenerated = true;
-            
-//             this.showToast('Success', 'Document preview generated successfully', 'success');
-            
-//         } catch (error) {
-//             this.handleError('Failed to generate preview: ' + error.body.message);
-//         } finally {
-//             this.isGeneratingPreview = false;
-//         }
-//     }
-
-//     async handleGenerateFinalDocument() {
-//         this.isGeneratingDocument = true;
-//         this.clearError();
-        
-//         try {
-//             const requestId = await createDocumentRequest({
-//                 documentType: this.selectedContractType,
-//                 region: this.selectedRegion,
-//                 role: this.selectedRole,
-//                 templateId: this.selectedTemplate,
-//                 additionalClauses: this.additionalClauses
-//             });
-            
-//             // Get detailed compliance analysis for final document
-//             const complianceAnalysis = await getDetailedComplianceAnalysis({
-//                 clauseText: this.generatedClause,
-//                 region: this.selectedRegion,
-//                 contractType: this.selectedContractType
-//             });
-            
-//             this.processComplianceAnalysis(complianceAnalysis);
-//             this.finalDocumentGenerated = true;
-            
-//             this.showToast('Success', `Document generated successfully. Request ID: ${requestId}`, 'success');
-            
-//         } catch (error) {
-//             this.handleError('Failed to generate final document: ' + error.body.message);
-//         } finally {
-//             this.isGeneratingDocument = false;
-//         }
-//     }
-
-//     async loadTemplatesForContractType() {
-//         if (this.selectedRegion && this.selectedContractType) {
-//             try {
-//                 const templates = await getDocumentTemplates({
-//                     region: this.selectedRegion,
-//                     contractType: this.selectedContractType
-//                 });
-                
-//                 this.templateOptions = templates.map(template => ({
-//                     label: template.name,
-//                     value: template.id
-//                 }));
-                
-//                 // Add default option
-//                 this.templateOptions.unshift({
-//                     label: 'Default Template',
-//                     value: ''
-//                 });
-                
-//             } catch (error) {
-//                 console.error('Failed to load templates:', error);
-//                 this.templateOptions = [{ label: 'Default Template', value: '' }];
-//             }
-//         }
-//     }
-
-//     processComplianceAnalysis(analysis) {
-//         this.complianceScore = analysis.complianceScore || 0;
-//         this.complianceStatusLabel = analysis.isCompliant ? 'Compliant' : 'Non-Compliant';
-//         this.riskLevel = analysis.riskLevel || 'Unknown';
-//         this.recommendations = analysis.recommendations || [];
-//     }
-
-//     // Action Methods
-//     handleDownloadDocument() {
-//         // Implementation for document download
-//         this.showToast('Info', 'Document download functionality will be implemented', 'info');
-//     }
-
-//     handleSaveDraft() {
-//         // Implementation for saving draft
-//         this.showToast('Info', 'Save draft functionality will be implemented', 'info');
-//     }
-
-//     handleGenerateNew() {
-//         // Reset all form data
-//         this.currentStep = '1';
-//         this.selectedContractType = '';
-//         this.selectedRegion = '';
-//         this.selectedRole = '';
-//         this.selectedOutputFormat = 'PDF';
-//         this.selectedTemplate = '';
-//         this.additionalClauses = '';
-//         this.selectedTone = 'professional';
-//         this.selectedLength = 'standard';
-//         this.aiProcessingEnabled = true;
-//         this.generatedClause = '';
-//         this.complianceScore = 0;
-//         this.complianceStatusLabel = '';
-//         this.riskLevel = '';
-//         this.recommendations = [];
-//         this.previewGenerated = false;
-//         this.finalDocumentGenerated = false;
-//         this.clearError();
-        
-//         this.showToast('Success', 'Form reset. Ready to generate new document', 'success');
-//     }
-
-//     // Utility Methods
-//     handleError(message) {
-//         this.hasError = true;
-//         this.errorMessage = message;
-//         this.showToast('Error', message, 'error');
-//     }
-
-//     clearError() {
-//         this.hasError = false;
-//         this.errorMessage = '';
-//     }
-
-//     showToast(title, message, variant) {
-//         const event = new ShowToastEvent({
-//             title: title,
-//             message: message,
-//             variant: variant
-//         });
-//         this.dispatchEvent(event);
-//     }
-// }
-
 import { LightningElement, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
@@ -695,113 +326,167 @@ export default class DocumentGenerator extends NavigationMixin(LightningElement)
         // For now, simulating generated content
         const templates = {
             'Employment': `EMPLOYMENT AGREEMENT
-            
-This Employment Agreement is entered into between the Company and '[Employee Name]'}, effective as of the date of execution. TERMS AND CONDITIONS: 1. Position and Responsibilities: The Employee will serve in the capacity of ${this.selectedRole} and will perform duties as assigned by the Company. 2. Compensation: The Employee will receive compensation as detailed in the attached compensation schedule, subject to applicable deductions and withholdings. 3. Employment Period: This agreement shall commence on the effective date and continue until terminated in accordance with the provisions herein. 4. Confidentiality: The Employee agrees to maintain confidentiality of all proprietary information and trade secrets of the Company. 5. Compliance: This agreement is governed by ${this.selectedRegion === 'US' ? 'United States federal and state laws' : this.selectedRegion === 'EU' ? 'European Union employment regulations and GDPR' : 'applicable local employment laws'}.`,
-            'NDA': `NON-DISCLOSURE AGREEMENT This Non-Disclosure Agreement is entered into between the Company and ${this.signerName || '[Party Name]'} for the purpose of protecting confidential information.`,
-            'SLA': `SERVICE LEVEL AGREEMENT This Service Level Agreement is entered into between the Company and ${this.signerName || '[Service Provider]'} to define service expectations and performance metrics.`,
-            'Contractor': `CONTRACTOR AGREEMENT This Contractor Agreement is entered into between the Company and ${this.signerName || '[Contractor Name]'} for the provision of professional services.`,
-            'Consulting': `CONSULTING AGREEMENT This Consulting Agreement is entered into between the Company and ${this.signerName || '[Consultant Name]'} for specialized consulting services.`
-        };
+generateClause() {
+    const templates = {
+        'Employment': `EMPLOYMENT AGREEMENT
+This Employment Agreement is entered into between the Company and ${this.signerName || '[Employee Name]'}, effective as of the date of execution.
 
-        let baseClause = templates[this.selectedContractType] || templates['Employment'];
+TERMS AND CONDITIONS:
+1. Position and Responsibilities: The Employee will serve in the capacity of ${this.selectedRole} and will perform duties as assigned by the Company.
+2. Compensation: The Employee will receive compensation as detailed in the attached compensation schedule, subject to applicable deductions and withholdings.
+3. Employment Period: This agreement shall commence on the effective date and continue until terminated in accordance with the provisions herein.
+4. Confidentiality: The Employee agrees to maintain confidentiality of all proprietary information and trade secrets of the Company.
+5. Compliance: This agreement is governed by ${
+            this.selectedRegion === 'US'
+                ? 'United States federal and state laws'
+                : this.selectedRegion === 'EU'
+                ? 'European Union employment regulations and GDPR'
+                : 'applicable local employment laws'
+        }.`,
 
-        // Add additional requirements if provided
-        if (this.additionalRequirements) {
-            baseClause += `\n\nADDITIONAL REQUIREMENTS:\n${this.additionalRequirements}`;
-        }
+        'NDA': `NON-DISCLOSURE AGREEMENT
+This Non-Disclosure Agreement is entered into between the Company and ${this.signerName || '[Party Name]'} for the purpose of protecting confidential information.`,
 
-        // Add AI-enhanced clauses if enabled
-        if (this.aiProcessingEnabled) {
-            baseClause += this.getAIEnhancedClauses();
-        }
+        'SLA': `SERVICE LEVEL AGREEMENT
+This Service Level Agreement is entered into between the Company and ${this.signerName || '[Service Provider]'} to define service expectations and performance metrics.`,
 
-        return baseClause;
+        'Contractor': `CONTRACTOR AGREEMENT
+This Contractor Agreement is entered into between the Company and ${this.signerName || '[Contractor Name]'} for the provision of professional services.`,
+
+        'Consulting': `CONSULTING AGREEMENT
+This Consulting Agreement is entered into between the Company and ${this.signerName || '[Consultant Name]'} for specialized consulting services.`
+    };
+
+    let baseClause = templates[this.selectedContractType] || templates['Employment'];
+
+    // Add additional requirements if provided
+    if (this.additionalRequirements) {
+        baseClause += `\n\nADDITIONAL REQUIREMENTS:\n${this.additionalRequirements}`;
     }
 
-    getAIEnhancedClauses() {
-        const aiClauses = {
-            'Employment': {
-                'Manager': '\n\nMANAGEMENT RESPONSIBILITIES:\n- Authorized signatory privileges for company documents\n- Team leadership and performance management duties\n- Budget oversight and resource allocation authority',
-                'Employee': '\n\nEMPLOYEE OBLIGATIONS:\n- Adherence to company policies and procedures\n- Professional development and training participation\n- Collaborative teamwork and communication',
-                'Developer': '\n\nTECHNICAL RESPONSIBILITIES:\n- Code quality standards and best practices\n- Intellectual property assignment for developed software\n- Security protocols and data protection compliance',
-                'Contractor': '\n\nCONTRACTOR PROVISIONS:\n- Independent contractor status clarification\n- Deliverable specifications and timeline requirements\n- Liability limitations and indemnification clauses'
-            },
-            'NDA': {
-                'Manager': '\n\nMANAGEMENT NDA TERMS:\n- Executive-level confidentiality obligations\n- Strategic information protection requirements',
-                'Employee': '\n\nEMPLOYEE NDA TERMS:\n- Standard confidentiality and non-disclosure provisions\n- Return of confidential materials upon termination'
-            }
-        };
-
-        const roleSpecific = aiClauses[this.selectedContractType]?.[this.selectedRole] || '';
-        const regionSpecific = this.getRegionSpecificClauses();
-
-        return roleSpecific + regionSpecific;
+    // Add AI-enhanced clauses if enabled
+    if (this.aiProcessingEnabled) {
+        baseClause += this.getAIEnhancedClauses();
     }
 
-    getRegionSpecificClauses() {
-        const regionClauses = {
-            'US': '\n\nUS COMPLIANCE PROVISIONS:\n- At-will employment terms (where applicable)\n- Equal Employment Opportunity compliance\n- Americans with Disabilities Act adherence',
-            'EU': '\n\nEU COMPLIANCE PROVISIONS:\n- GDPR data protection requirements\n- European Working Time Directive compliance\n- Cross-border data transfer provisions',
-            'APAC': '\n\nAPAC COMPLIANCE PROVISIONS:\n- Local labor law compliance requirements\n- Cultural sensitivity and diversity provisions',
-            'GLOBAL': '\n\nGLOBAL COMPLIANCE PROVISIONS:\n- Multi-jurisdictional legal framework adherence\n- International data transfer compliance\n- Global HR policy alignment'
-        };
+    return baseClause;
+}
 
-        return regionClauses[this.selectedRegion] || '';
-    }
+getAIEnhancedClauses() {
+    const aiClauses = {
+        'Employment': {
+            'Manager': `\n\nMANAGEMENT RESPONSIBILITIES:
+- Authorized signatory privileges for company documents
+- Team leadership and performance management duties
+- Budget oversight and resource allocation authority`,
 
-    async validateCompliance() {
-        // Simulate compliance validation
-        const complianceRules = {
-            'Employment': {
-                'US': { requiredTerms: ['at-will', 'equal opportunity', 'confidentiality'], score: 95 },
-                'EU': { requiredTerms: ['GDPR', 'working time', 'data protection'], score: 92 }
-            },
-            'NDA': {
-                'US': { requiredTerms: ['confidentiality', 'return of materials'], score: 98 },
-                'EU': { requiredTerms: ['GDPR', 'data protection'], score: 96 }
-            }
-        };
+            'Employee': `\n\nEMPLOYEE OBLIGATIONS:
+- Adherence to company policies and procedures
+- Professional development and training participation
+- Collaborative teamwork and communication`,
 
-        const rules = complianceRules[this.selectedContractType]?.[this.selectedRegion];
+            'Developer': `\n\nTECHNICAL RESPONSIBILITIES:
+- Code quality standards and best practices
+- Intellectual property assignment for developed software
+- Security protocols and data protection compliance`,
 
-        if (!rules) {
-            return {
-                isCompliant: true,
-                score: 85,
-                analysis: 'Basic compliance validation completed',
-                violations: []
-            };
+            'Contractor': `\n\nCONTRACTOR PROVISIONS:
+- Independent contractor status clarification
+- Deliverable specifications and timeline requirements
+- Liability limitations and indemnification clauses`
+        },
+        'NDA': {
+            'Manager': `\n\nMANAGEMENT NDA TERMS:
+- Executive-level confidentiality obligations
+- Strategic information protection requirements`,
+
+            'Employee': `\n\nEMPLOYEE NDA TERMS:
+- Standard confidentiality and non-disclosure provisions
+- Return of confidential materials upon termination`
         }
+    };
 
-        // Check for required terms
-        const clauseText = this.generatedClause.toLowerCase();
-        const missingTerms = rules.requiredTerms.filter(term => 
-            !clauseText.includes(term.toLowerCase())
-        );
+    const roleSpecific = aiClauses[this.selectedContractType]?.[this.selectedRole] || '';
+    const regionSpecific = this.getRegionSpecificClauses();
 
-        const isCompliant = missingTerms.length === 0;
+    return roleSpecific + regionSpecific;
+}
 
-        this.complianceDetails = {
-            complianceScore: rules.score - (missingTerms.length * 10),
-            analysis: isCompliant ? 
-                `Document meets all ${this.selectedRegion} regulatory requirements for ${this.selectedContractType} agreements.` : 
-                `Document requires review for ${this.selectedRegion} compliance standards.`,
-            violations: missingTerms.map(term => `Missing required term: "${term}"`)
-        };
+getRegionSpecificClauses() {
+    const regionClauses = {
+        'US': `\n\nUS COMPLIANCE PROVISIONS:
+- At-will employment terms (where applicable)
+- Equal Employment Opportunity compliance
+- Americans with Disabilities Act adherence`,
 
+        'EU': `\n\nEU COMPLIANCE PROVISIONS:
+- GDPR data protection requirements
+- European Working Time Directive compliance
+- Cross-border data transfer provisions`,
+
+        'APAC': `\n\nAPAC COMPLIANCE PROVISIONS:
+- Local labor law compliance requirements
+- Cultural sensitivity and diversity provisions`,
+
+        'GLOBAL': `\n\nGLOBAL COMPLIANCE PROVISIONS:
+- Multi-jurisdictional legal framework adherence
+- International data transfer compliance
+- Global HR policy alignment`
+    };
+
+    return regionClauses[this.selectedRegion] || '';
+}
+
+async validateCompliance() {
+    // Simulated compliance validation rules
+    const complianceRules = {
+        'Employment': {
+            'US': { requiredTerms: ['at-will', 'equal opportunity', 'confidentiality'], score: 95 },
+            'EU': { requiredTerms: ['GDPR', 'working time', 'data protection'], score: 92 }
+        },
+        'NDA': {
+            'US': { requiredTerms: ['confidentiality', 'return of materials'], score: 98 },
+            'EU': { requiredTerms: ['GDPR', 'data protection'], score: 96 }
+        }
+    };
+
+    const rules = complianceRules[this.selectedContractType]?.[this.selectedRegion];
+    if (!rules) {
         return {
-            isCompliant,
-            score: this.complianceDetails.complianceScore,
-            analysis: this.complianceDetails.analysis,
-            violations: this.complianceDetails.violations
+            isCompliant: true,
+            score: 85,
+            analysis: 'Basic compliance validation completed',
+            violations: []
         };
     }
 
-    generateDocumentContent() {
-        return `
+    // Check required terms
+    const clauseText = this.generatedClause.toLowerCase();
+    const missingTerms = rules.requiredTerms.filter(
+        term => !clauseText.includes(term.toLowerCase())
+    );
+    const isCompliant = missingTerms.length === 0;
+
+    this.complianceDetails = {
+        complianceScore: rules.score - (missingTerms.length * 10),
+        analysis: isCompliant
+            ? `Document meets all ${this.selectedRegion} regulatory requirements for ${this.selectedContractType} agreements.`
+            : `Document requires review for ${this.selectedRegion} compliance standards.`,
+        violations: missingTerms.map(term => `Missing required term: "${term}"`)
+    };
+
+    return {
+        isCompliant,
+        score: this.complianceDetails.complianceScore,
+        analysis: this.complianceDetails.analysis,
+        violations: this.complianceDetails.violations
+    };
+}
+
+generateDocumentContent() {
+    return `
 GENERATED DOCUMENT
 ===================
-
 Document ID: ${this.documentId}
 Contract Type: ${this.selectedContractType}
 Region: ${this.selectedRegion}
@@ -811,12 +496,10 @@ AI Processing: ${this.aiProcessingEnabled ? 'Enabled' : 'Disabled'}
 
 DOCUMENT CONTENT:
 ==================
-
 ${this.generatedClause}
 
 SIGNATURE INFORMATION:
 =======================
-
 Signer Name: ${this.signerName}
 Signer Email: ${this.signerEmail}
 Signature Request ID: ${this.signatureRequestId}
@@ -825,61 +508,62 @@ ${this.signatureInstructions ? `Instructions: ${this.signatureInstructions}` : '
 
 COMPLIANCE STATUS:
 ==================
-
 Status: ${this.complianceStatus?.isCompliant ? 'Compliant' : 'Requires Review'}
 Score: ${this.complianceDetails?.complianceScore || 'N/A'}%
 Analysis: ${this.complianceDetails?.analysis || 'No analysis available'}
-${this.complianceDetails?.violations?.length > 0 ? `Violations: ${this.complianceDetails.violations.join(', ')}` : ''}
-        `;
-    }
+${this.complianceDetails?.violations?.length > 0 
+    ? `Violations: ${this.complianceDetails.violations.join(', ')}` 
+    : ''} 
+`;
+}
 
-    resetGenerationData() {
-        this.generatedClause = '';
-        this.complianceStatus = null;
-        this.complianceDetails = null;
-        this.documentId = '';
-        this.signatureRequestId = '';
-        this.emailSentStatus = false;
-    }
+resetGenerationData() {
+    this.generatedClause = '';
+    this.complianceStatus = null;
+    this.complianceDetails = null;
+    this.documentId = '';
+    this.signatureRequestId = '';
+    this.emailSentStatus = false;
+}
 
-    resetComponent() {
-        // Reset all form data
-        this.currentStep = 1;
-        this.selectedRegion = '';
-        this.selectedRole = '';
-        this.selectedContractType = '';
-        this.additionalRequirements = '';
-        this.aiProcessingEnabled = true;
-        this.signerEmail = '';
-        this.signerName = '';
-        this.signatureInstructions = '';
-        this.selectedSignatureOptions = [];
-        this.resetGenerationData();
-        this.clearError();
-    }
+resetComponent() {
+    // Reset all form data
+    this.currentStep = 1;
+    this.selectedRegion = '';
+    this.selectedRole = '';
+    this.selectedContractType = '';
+    this.additionalRequirements = '';
+    this.aiProcessingEnabled = true;
+    this.signerEmail = '';
+    this.signerName = '';
+    this.signatureInstructions = '';
+    this.selectedSignatureOptions = [];
 
-    // Utility Methods
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
+    this.resetGenerationData();
+    this.clearError();
+}
 
-    showSuccessToast(message) {
-        this.dispatchEvent(
-            new ShowToastEvent({
-                title: 'Success',
-                message: message,
-                variant: 'success'
-            })
-        );
-    }
+// Utility Methods
+delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-    showErrorToast(message) {
-        this.dispatchEvent(
-            new ShowToastEvent({
-                title: 'Error',
-                message: message,
-                variant: 'error'
-            })
-        );
-    }
+showSuccessToast(message) {
+    this.dispatchEvent(
+        new ShowToastEvent({
+            title: 'Success',
+            message: message,
+            variant: 'success'
+        })
+    );
+}
+
+showErrorToast(message) {
+    this.dispatchEvent(
+        new ShowToastEvent({
+            title: 'Error',
+            message: message,
+            variant: 'error'
+        })
+    );
 }

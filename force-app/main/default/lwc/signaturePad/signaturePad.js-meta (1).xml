@@ -1,0 +1,72 @@
+
+<!-- version 2 -->
+
+
+<!-- 
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>58.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>Signature_Request__c</object>
+            </objects>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle> -->
+
+
+
+
+
+<!-- version 1 -->
+
+<!-- 
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <property name="requestId" type="String" label="Signature Request ID" role="input"/>
+            <property name="signerName" type="String" label="Signer Name" role="input"/>
+            <property name="documentTitle" type="String" label="Document Title" role="input"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle> -->
+
+
+
+
+
+
+
+
+<!-- version 0 -->
+
+<!-- <?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <property name="requestId" type="String" label="Signature Request ID"/>
+            <property name="signerName" type="String" label="Signer Name"/>
+            <property name="documentTitle" type="String" label="Document Title"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle> -->

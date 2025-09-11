@@ -1,7 +1,3 @@
-// ===================================
-// ADVANCED SECURITY IMPLEMENTATION
-// ===================================
-
 public class AdvancedDocumentSecurity {
     
     public static void enableEncryption(String documentId, String encryptionType) {
@@ -163,9 +159,7 @@ public class AdvancedDocumentSecurity {
     
     // Utility methods for security implementation
     private static String generateEncryptionKeyId() {
-        return 'ENC_' + EncodingUtil.convertToHex(
-            Crypto.generateAesKey(256)
-        ).substring(0, 16).toUpperCase();
+        return 'ENC_' + EncodingUtil.convertToHex(Crypto.generateAesKey(256)).substring(0, 16).toUpperCase();
     }
     
     private static void generateAndStoreEncryptionKeys(String securityConfigId, String encryptionType) {
@@ -187,49 +181,23 @@ public class AdvancedDocumentSecurity {
     
     private static String generateWatermarkHash(String watermarkText) {
         return EncodingUtil.convertToHex(
-            Crypto.generateDigest(
-                'SHA256', 
-                Blob.valueOf(watermarkText + String.valueOf(DateTime.now()))
-            )
+            Crypto.generateDigest('SHA256', Blob.valueOf(watermarkText + String.valueOf(DateTime.now())))
         );
     }
     
     private static String generateDocumentContentHash(String documentId) {
-        ContentVersion version = [
-            SELECT VersionData 
-            FROM ContentVersion 
-            WHERE ContentDocumentId = :documentId 
-            AND IsLatest = true 
-            LIMIT 1
-        ];
-        return EncodingUtil.convertToHex(
-            Crypto.generateDigest('SHA256', version.VersionData)
-        );
+        ContentVersion version = [SELECT VersionData FROM ContentVersion WHERE ContentDocumentId = :documentId AND IsLatest = true LIMIT 1];
+        return EncodingUtil.convertToHex(Crypto.generateDigest('SHA256', version.VersionData));
     }
     
     private static String generateDocumentMetadataHash(String documentId) {
-        ContentDocument doc = [
-            SELECT Title, FileType, CreatedDate, LastModifiedDate 
-            FROM ContentDocument 
-            WHERE Id = :documentId 
-            LIMIT 1
-        ];
-        String metadata = doc.Title + doc.FileType + 
-                          String.valueOf(doc.CreatedDate) + 
-                          String.valueOf(doc.LastModifiedDate);
-        return EncodingUtil.convertToHex(
-            Crypto.generateDigest('SHA256', Blob.valueOf(metadata))
-        );
+        ContentDocument doc = [SELECT Title, FileType, CreatedDate, LastModifiedDate FROM ContentDocument WHERE Id = :documentId LIMIT 1];
+        String metadata = doc.Title + doc.FileType + String.valueOf(doc.CreatedDate) + String.valueOf(doc.LastModifiedDate);
+        return EncodingUtil.convertToHex(Crypto.generateDigest('SHA256', Blob.valueOf(metadata)));
     }
     
     private static Integer getDocumentSize(String documentId) {
-        ContentVersion version = [
-            SELECT ContentSize 
-            FROM ContentVersion 
-            WHERE ContentDocumentId = :documentId 
-            AND IsLatest = true 
-            LIMIT 1
-        ];
+        ContentVersion version = [SELECT ContentSize FROM ContentVersion WHERE ContentDocumentId = :documentId AND IsLatest = true LIMIT 1];
         return version.ContentSize;
     }
     
@@ -277,25 +245,23 @@ public class AdvancedDocumentSecurity {
             'compliance@company.com',
             'it-admin@company.com'
         };
-        
-        Map<String, String> mergeData = new Map<String, String>{
-            'documentId' => alert.Document__c,
-            'severity' => alert.Alert_Severity__c,
-            'alertType' => alert.Alert_Type__c,
-            'details' => alert.Alert_Message__c,
-            'timestamp' => String.valueOf(alert.Created_Date__c),
-            'investigationRequired' => String.valueOf(alert.Requires_Investigation__c)
-        };
-        
-        EmailNotificationService.sendTemplatedEmail(
-            'Security_Tamper_Alert',
-            recipients,
-            mergeData
-        );
-        
-        // Update alert as notification sent
-        alert.Notification_Sent__c = true;
-        alert.Notification_Sent_Date__c = DateTime.now();
-        update alert;
-    }
-}
+Map<String, String> mergeData = new Map<String, String>{
+    'documentId'             => alert.Document__c,
+    'severity'               => alert.Alert_Severity__c,
+    'alertType'              => alert.Alert_Type__c,
+    'details'                => alert.Alert_Message__c,
+    'timestamp'              => String.valueOf(alert.Created_Date__c),
+    'investigationRequired'  => String.valueOf(alert.Requires_Investigation__c)
+};
+
+// Send templated email
+EmailNotificationService.sendTemplatedEmail(
+    'Security_Tamper_Alert',
+    recipients,
+    mergeData
+);
+
+// Update alert as notification sent
+alert.Notification_Sent__c      = true;
+alert.Notification_Sent_Date__c = DateTime.now();
+update alert;
