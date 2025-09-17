@@ -657,3 +657,4 @@ private static void storeEmbeddingsInSnowflake(String documentId, VectorEmbeddin
         );
     }
 }
+}

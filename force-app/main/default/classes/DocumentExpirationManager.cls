@@ -1,3 +1,4 @@
+    public class DocumentExpirationManager{
     // Create expiration policies and rules
     public static void createExpirationPolicies() {
         List<DocumentExpirationPolicy__c> policies = new List<DocumentExpirationPolicy__c>();

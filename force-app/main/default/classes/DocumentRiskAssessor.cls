@@ -120,52 +120,113 @@ public class DocumentRiskAssessor {
         return Math.min(100, riskScore);
     }
     
+    // private static Decimal assessOperationalRisk(String documentId, DocumentAnalysisRecord__c analysis) {
+    //     Decimal riskScore = 0;
+        
+    //     // Check document availability
+    //     List<SystemDowntime__c> downtimeRecords = [
+    //         SELECT Id FROM SystemDowntime__c 
+    //         WHERE CreatedDate >= :DateTime.now().addDays(-7)
+    //         AND Impact__c INCLUDES 'DOCUMENT_ACCESS'
+    //     ];
+    //     if (!downtimeRecords.isEmpty()) {
+    //         riskScore += 25;
+    //     }
+        
+    //     // Check backup status
+    //     List<DocumentBackup__c> backupRecords = [
+    //         SELECT Backup_Status__c FROM DocumentBackup__c 
+    //         WHERE Document__c = :documentId 
+    //         ORDER BY CreatedDate DESC 
+    //         LIMIT 1
+    //     ];
+    //     if (backupRecords.isEmpty() || backupRecords[0].Backup_Status__c != 'SUCCESS') {
+    //         riskScore += 30;
+    //     }
+        
+    //     // Check version control
+    //     List<ContentVersion> versions = [
+    //         SELECT Id FROM ContentVersion 
+    //         WHERE ContentDocumentId = :documentId
+    //     ];
+    //     if (versions.size() > 10) {
+    //         riskScore += 15; // Too many versions might indicate chaos
+    //     }
+        
+    //     // Check collaborative access
+    //     List<CollaborativeSession__c> activeSessions = [
+    //         SELECT Id FROM CollaborativeSession__c 
+    //         WHERE Document__c = :documentId 
+    //         AND Status__c = 'ACTIVE'
+    //     ];
+    //     if (activeSessions.size() > 5) {
+    //         riskScore += 20; // Too many concurrent collaborators
+    //     }
+        
+    //     return Math.min(100, riskScore);
+    // }
     private static Decimal assessOperationalRisk(String documentId, DocumentAnalysisRecord__c analysis) {
-        Decimal riskScore = 0;
-        
-        // Check document availability
-        List<SystemDowntime__c> downtimeRecords = [
-            SELECT Id FROM SystemDowntime__c 
-            WHERE CreatedDate >= :DateTime.now().addDays(-7)
-            AND Impact__c INCLUDES 'DOCUMENT_ACCESS'
-        ];
-        if (!downtimeRecords.isEmpty()) {
-            riskScore += 25;
-        }
-        
-        // Check backup status
-        List<DocumentBackup__c> backupRecords = [
-            SELECT Backup_Status__c FROM DocumentBackup__c 
-            WHERE Document__c = :documentId 
-            ORDER BY CreatedDate DESC 
-            LIMIT 1
-        ];
-        if (backupRecords.isEmpty() || backupRecords[0].Backup_Status__c != 'SUCCESS') {
-            riskScore += 30;
-        }
-        
-        // Check version control
-        List<ContentVersion> versions = [
-            SELECT Id FROM ContentVersion 
-            WHERE ContentDocumentId = :documentId
-        ];
-        if (versions.size() > 10) {
-            riskScore += 15; // Too many versions might indicate chaos
-        }
-        
-        // Check collaborative access
-        List<CollaborativeSession__c> activeSessions = [
-            SELECT Id FROM CollaborativeSession__c 
-            WHERE Document__c = :documentId 
-            AND Status__c = 'ACTIVE'
-        ];
-        if (activeSessions.size() > 5) {
-            riskScore += 20; // Too many concurrent collaborators
-        }
-        
-        return Math.min(100, riskScore);
+    Decimal riskScore = 0;
+    
+    // -------------------------
+    // 1. Check document availability (system downtime in last 7 days)
+    // -------------------------
+    List<SystemDowntime__c> downtimeRecords = [
+        SELECT Id 
+        FROM SystemDowntime__c 
+        WHERE CreatedDate >= :DateTime.now().addDays(-7)
+        // Use INCLUDES only if Impact__c is a multi-select picklist
+        AND Impact__c INCLUDES ('DOCUMENT_ACCESS')
+    ];
+    if (!downtimeRecords.isEmpty()) {
+        riskScore += 25; // Increase risk if downtime occurred
     }
     
+    // -------------------------
+    // 2. Check backup status (latest backup for this document)
+    // -------------------------
+    List<DocumentBackup__c> backupRecords = [
+        SELECT Backup_Status__c 
+        FROM DocumentBackup__c 
+        WHERE Document__c = :documentId 
+        ORDER BY CreatedDate DESC 
+        LIMIT 1
+    ];
+    if (backupRecords.isEmpty() || backupRecords[0].Backup_Status__c != 'SUCCESS') {
+        riskScore += 30; // Increase risk if no successful recent backup
+    }
+    
+    // -------------------------
+    // 3. Check version control (too many versions = possible chaos)
+    // -------------------------
+    List<ContentVersion> versions = [
+        SELECT Id 
+        FROM ContentVersion 
+        WHERE ContentDocumentId = :documentId
+    ];
+    if (versions.size() > 10) {
+        riskScore += 15;
+    }
+    
+    // -------------------------
+    // 4. Check collaborative access (too many active sessions)
+    // -------------------------
+    List<CollaborativeSession__c> activeSessions = [
+        SELECT Id 
+        FROM CollaborativeSession__c 
+        WHERE Document__c = :documentId 
+        AND Status__c = 'ACTIVE'
+    ];
+    if (activeSessions.size() > 5) {
+        riskScore += 20;
+    }
+    
+    // -------------------------
+    // Final: Cap risk score at 100
+    // -------------------------
+    return Math.min(100, riskScore);
+}
+
     private static Decimal assessPrivacyRisk(String documentId, DocumentAnalysisRecord__c analysis) {
         Decimal riskScore = 0;
         

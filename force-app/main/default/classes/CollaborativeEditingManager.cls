@@ -81,25 +81,59 @@ public class CollaborativeEditingManager {
         insert editOp;
     }
 
+    // private static List<EditingOperation__c> detectConflicts(EditingOperation__c newOp, OperationalTransformState__c otState) {
+    //     // Find overlapping operations from other users
+    //     return [
+    //         SELECT Id, Operation_Type__c, Operation_Position__c, Operation_Length__c, 
+    //                User__c, Operation_Content__c, Operation_JSON__c
+    //         FROM EditingOperation__c 
+    //         WHERE Collaborative_Session__c = :newOp.Collaborative_Session__c
+    //         AND User__c != :newOp.User__c
+    //         AND Operation_Status__c IN ('PENDING_TRANSFORM', 'APPLIED')
+    //         AND Server_Revision__c > (:newOp.Client_Revision__c - 10) // Check recent operations
+    //         AND (
+    //             (Operation_Position__c <= :newOp.Operation_Position__c 
+    //              AND (Operation_Position__c + Operation_Length__c) > :newOp.Operation_Position__c)
+    //             OR 
+    //             (Operation_Position__c < (:newOp.Operation_Position__c + newOp.Operation_Length__c)
+    //              AND Operation_Position__c >= :newOp.Operation_Position__c)
+    //         )
+    //         ORDER BY Operation_Timestamp__c DESC
+    //     ];
+    // }
     private static List<EditingOperation__c> detectConflicts(EditingOperation__c newOp, OperationalTransformState__c otState) {
-        // Find overlapping operations from other users
-        return [
+        Integer minRevision = newOp.Client_Revision__c - 10;
+        Integer opStart = newOp.Operation_Position__c;
+        Integer opEnd = newOp.Operation_Position__c + newOp.Operation_Length__c;
+
+        // Get recent operations first
+        List<EditingOperation__c> candidates = [
             SELECT Id, Operation_Type__c, Operation_Position__c, Operation_Length__c, 
-                   User__c, Operation_Content__c, Operation_JSON__c
+                User__c, Operation_Content__c, Operation_JSON__c
             FROM EditingOperation__c 
             WHERE Collaborative_Session__c = :newOp.Collaborative_Session__c
             AND User__c != :newOp.User__c
             AND Operation_Status__c IN ('PENDING_TRANSFORM', 'APPLIED')
-            AND Server_Revision__c > (:newOp.Client_Revision__c - 10) // Check recent operations
-            AND (
-                (Operation_Position__c <= :newOp.Operation_Position__c 
-                 AND (Operation_Position__c + Operation_Length__c) > :newOp.Operation_Position__c)
-                OR 
-                (Operation_Position__c < (:newOp.Operation_Position__c + newOp.Operation_Length__c)
-                 AND Operation_Position__c >= :newOp.Operation_Position__c)
-            )
+            AND Server_Revision__c > :minRevision
             ORDER BY Operation_Timestamp__c DESC
         ];
+
+        // Apply overlap detection in Apex (since SOQL can’t do arithmetic between fields)
+        List<EditingOperation__c> conflicts = new List<EditingOperation__c>();
+        for (EditingOperation__c op : candidates) {
+            Integer existingStart = op.Operation_Position__c;
+            Integer existingEnd = op.Operation_Position__c + op.Operation_Length__c;
+
+            Boolean overlaps = 
+                (existingStart <= opStart && existingEnd > opStart) ||
+                (existingStart < opEnd && existingStart >= opStart);
+
+            if (overlaps) {
+                conflicts.add(op);
+            }
+        }
+
+        return conflicts;
     }
 
     private static void createConflictResolutionRecords(EditingOperation__c newOp, List<EditingOperation__c> conflicts, OperationalTransformState__c otState) {

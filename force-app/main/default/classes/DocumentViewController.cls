@@ -300,35 +300,36 @@
             @AuraEnabled public Boolean hipaaCompliant { get; set; }
             @AuraEnabled public List<String> violations { get; set; }
             @AuraEnabled public List<String> recommendations { get; set; }
+           
+        // Wrapper class
+        public class DocumentViewWrapper {
+            @AuraEnabled public String documentId;
+            @AuraEnabled public String title;
+            @AuraEnabled public String type;
+            @AuraEnabled public String status;
+            @AuraEnabled public String version;
+            @AuraEnabled public String createdDate;
+            @AuraEnabled public String lastModified;
+            @AuraEnabled public String lastSaved;
+            @AuraEnabled public String jurisdiction;
+            @AuraEnabled public String retentionPeriod;
+            @AuraEnabled public String expirationDate;
+            @AuraEnabled public String legalHoldStatus;
+            @AuraEnabled public String archiveStatus;
+            @AuraEnabled public Integer viewCount;
+            @AuraEnabled public Decimal averageReadTime;
+            @AuraEnabled public String contentType;
+            @AuraEnabled public String pdfUrl;
+            @AuraEnabled public String htmlContent;
+            @AuraEnabled public String documentHash;
+            @AuraEnabled public String securityLevel;
+            @AuraEnabled public Decimal complianceScore;
+            @AuraEnabled public Decimal riskScore;
+            @AuraEnabled public String riskLevel;
+            @AuraEnabled public Boolean aiAnalysisComplete;
+            @AuraEnabled public Boolean collaborationEnabled;
+        }
         }
     }
     
-    // Wrapper class
-    public class DocumentViewWrapper {
-        @AuraEnabled public String documentId;
-        @AuraEnabled public String title;
-        @AuraEnabled public String type;
-        @AuraEnabled public String status;
-        @AuraEnabled public String version;
-        @AuraEnabled public String createdDate;
-        @AuraEnabled public String lastModified;
-        @AuraEnabled public String lastSaved;
-        @AuraEnabled public String jurisdiction;
-        @AuraEnabled public String retentionPeriod;
-        @AuraEnabled public String expirationDate;
-        @AuraEnabled public String legalHoldStatus;
-        @AuraEnabled public String archiveStatus;
-        @AuraEnabled public Integer viewCount;
-        @AuraEnabled public Decimal averageReadTime;
-        @AuraEnabled public String contentType;
-        @AuraEnabled public String pdfUrl;
-        @AuraEnabled public String htmlContent;
-        @AuraEnabled public String documentHash;
-        @AuraEnabled public String securityLevel;
-        @AuraEnabled public Decimal complianceScore;
-        @AuraEnabled public Decimal riskScore;
-        @AuraEnabled public String riskLevel;
-        @AuraEnabled public Boolean aiAnalysisComplete;
-        @AuraEnabled public Boolean collaborationEnabled;
-    }
-}
+    

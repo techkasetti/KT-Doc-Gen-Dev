@@ -279,16 +279,11 @@ public class RegulatoryComplianceEngine {
         );
         insert record;
     }
-}
+
 // ===================================
 // RegulatoryComplianceEngine (Continuation)
 // ===================================
 
-public class RegulatoryComplianceEngine {
-
-    // ===============================
-    // Counting & Utility Methods
-    // ===============================
 
     private static Integer countCriticalIssues(ComplianceValidationResult result) {
         Integer criticalCount = 0;
@@ -716,7 +711,7 @@ public class RegulatoryComplianceEngine {
             this.complianceStatus = 'NOT_EVALUATED';
         }
     }
-}
+
 public class FrameworkComplianceResult {
     public String status;
     public List<String> recommendedActions;
@@ -740,4 +735,5 @@ public class ComplianceValidationItem {
     public ComplianceValidationItem() {
         this.recommendedActions = new List<String>();
     }
+}
 }

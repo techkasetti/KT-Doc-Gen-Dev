@@ -990,6 +990,75 @@ public static Boolean resetSignatureRequest(String requestId) {
  * Get signature statistics for dashboard
  * @return Map containing signature statistics
  */
+// @AuraEnabled
+// public static Map<String, Object> getSignatureStatistics() {
+//     System.debug('Retrieving signature statistics');
+//     try {
+//         Map<String, Object> stats = new Map<String, Object>();
+        
+//         // Overall statistics
+//         List<AggregateResult> overallStats = [
+//             SELECT Status__c, COUNT(Id) count
+//             FROM Signature_Request__c 
+//             WHERE CreatedDate = LAST_N_DAYS:30
+//             GROUP BY Status__c
+//         ];
+        
+//         Integer totalRequests = 0;
+//         Integer completedRequests = 0;
+//         Integer pendingRequests = 0;
+//         Integer rejectedRequests = 0;
+        
+//         for (AggregateResult result : overallStats) {
+//             String status = (String)result.get('Status__c');
+//             Integer count = (Integer)result.get('count');
+//             totalRequests += count;
+            
+//             if (status == SignatureStatus.SIGNED.name() || status == SignatureStatus.COMPLETED.name()) {
+//                 completedRequests += count;
+//             } else if (status == SignatureStatus.PENDING.name()) {
+//                 pendingRequests += count;
+//             } else if (status == SignatureStatus.REJECTED.name()) {
+//                 rejectedRequests += count;
+//             }
+//         }
+        
+//         Decimal completionRate = totalRequests > 0 ? 
+//             (Decimal.valueOf(completedRequests) / Decimal.valueOf(totalRequests)) * 100 : 0;
+        
+//         stats.put('totalRequests', totalRequests);
+//         stats.put('completedRequests', completedRequests);
+//         stats.put('pendingRequests', pendingRequests);
+//         stats.put('rejectedRequests', rejectedRequests);
+//         stats.put('completionRate', completionRate);
+        
+//         // Daily trend for last 7 days
+//         List<AggregateResult> dailyStats = [
+//             SELECT DAY_ONLY(CreatedDate) day, COUNT(Id) count
+//             FROM Signature_Request__c 
+//             WHERE CreatedDate = LAST_N_DAYS:7
+//             GROUP BY DAY_ONLY(CreatedDate)
+//             ORDER BY DAY_ONLY(CreatedDate)
+//         ];
+        
+//         Map<String, Integer> dailyTrend = new Map<String, Integer>();
+//         for (AggregateResult result : dailyStats) {
+//             Date day = (Date)result.get('day');
+//             Integer count = (Integer)result.get('count');
+//             dailyTrend.put(day.format(), count);
+//         }
+        
+//         stats.put('dailyTrend', dailyTrend);
+//         stats.put('lastUpdated', DateTime.now());
+        
+//         System.debug('✓ Signature statistics compiled');
+//         return stats;
+        
+//     } catch (Exception e) {
+//         System.debug('✗ Failed to retrieve signature statistics: ' + e.getMessage());
+//         throw new AuraHandledException('Failed to retrieve signature statistics: ' + e.getMessage());
+//     }
+// }
 @AuraEnabled
 public static Map<String, Object> getSignatureStatistics() {
     System.debug('Retrieving signature statistics');
@@ -998,7 +1067,7 @@ public static Map<String, Object> getSignatureStatistics() {
         
         // Overall statistics
         List<AggregateResult> overallStats = [
-            SELECT Status__c, COUNT(Id) count
+            SELECT Status__c, COUNT(Id) totalCount
             FROM Signature_Request__c 
             WHERE CreatedDate = LAST_N_DAYS:30
             GROUP BY Status__c
@@ -1011,7 +1080,7 @@ public static Map<String, Object> getSignatureStatistics() {
         
         for (AggregateResult result : overallStats) {
             String status = (String)result.get('Status__c');
-            Integer count = (Integer)result.get('count');
+            Integer count = (Integer)result.get('totalCount');
             totalRequests += count;
             
             if (status == SignatureStatus.SIGNED.name() || status == SignatureStatus.COMPLETED.name()) {
@@ -1034,7 +1103,7 @@ public static Map<String, Object> getSignatureStatistics() {
         
         // Daily trend for last 7 days
         List<AggregateResult> dailyStats = [
-            SELECT DAY_ONLY(CreatedDate) day, COUNT(Id) count
+            SELECT DAY_ONLY(CreatedDate) day, COUNT(Id) totalCount
             FROM Signature_Request__c 
             WHERE CreatedDate = LAST_N_DAYS:7
             GROUP BY DAY_ONLY(CreatedDate)
@@ -1044,7 +1113,7 @@ public static Map<String, Object> getSignatureStatistics() {
         Map<String, Integer> dailyTrend = new Map<String, Integer>();
         for (AggregateResult result : dailyStats) {
             Date day = (Date)result.get('day');
-            Integer count = (Integer)result.get('count');
+            Integer count = (Integer)result.get('totalCount');
             dailyTrend.put(day.format(), count);
         }
         

@@ -238,8 +238,7 @@ public class AdvancedDocumentSecurity {
         // Send immediate notifications
         sendTamperAlertNotifications(alert);
     }
-    
-    private static void sendTamperAlertNotifications(TamperAlert__c alert) {
+private static void sendTamperAlertNotifications(TamperAlert__c alert) {
         List<String> recipients = new List<String>{
             'security@company.com',
             'compliance@company.com',
@@ -265,3 +264,5 @@ EmailNotificationService.sendTemplatedEmail(
 alert.Notification_Sent__c      = true;
 alert.Notification_Sent_Date__c = DateTime.now();
 update alert;
+    }
+}

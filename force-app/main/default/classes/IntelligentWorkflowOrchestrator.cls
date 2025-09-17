@@ -222,7 +222,7 @@ public class IntelligentWorkflowOrchestrator {
         }
         return stepResult;
     }
-}
+
 // ------------------- Risk Assessment -------------------
 private static WorkflowStepResult executeRiskAssessment(String documentId) {
     WorkflowStepResult stepResult = new WorkflowStepResult();
@@ -498,32 +498,52 @@ private static List<String> determineApplicableFrameworks(
     return frameworks;
 }
 
+// private static String determineOverallWorkflowStatus(List<WorkflowStepResult> stepResults) {
+//     Boolean hasFailure = false;
+//     Boolean hasWarning = false;
+
+//     for (WorkflowStepResult step : stepResults) {
+//         if (step.status == 'FAILED') {
+//             hasFailure = true;
+//             break;
+//         }
+//         if (step.status == 'WARNING') {
+//             hasWarning = true;
+//         }
+//     }
+
+//     if (hasFailure) return 'FAILED';
+//     if (hasWarning) return 'WARNING';
+//     return 'SUCCESS';
+// }
+// else if (step.status == 'WARNING') {
+//     hasWarning = true;
+// }
+
+
+// if (hasFailure) return 'FAILED';
+// if (hasWarning) return 'COMPLETED_WITH_WARNINGS';
+// return 'SUCCESS';
+// }
 private static String determineOverallWorkflowStatus(List<WorkflowStepResult> stepResults) {
     Boolean hasFailure = false;
     Boolean hasWarning = false;
 
+    // Loop through all steps
     for (WorkflowStepResult step : stepResults) {
         if (step.status == 'FAILED') {
             hasFailure = true;
-            break;
+            break; // failure overrides everything
         }
-        if (step.status == 'WARNING') {
+        else if (step.status == 'WARNING') {
             hasWarning = true;
         }
     }
 
+    // Final decision
     if (hasFailure) return 'FAILED';
-    if (hasWarning) return 'WARNING';
+    if (hasWarning) return 'COMPLETED_WITH_WARNINGS';
     return 'SUCCESS';
-}
-else if (step.status == 'WARNING') {
-    hasWarning = true;
-}
-}
-
-if (hasFailure) return 'FAILED';
-if (hasWarning) return 'COMPLETED_WITH_WARNINGS';
-return 'SUCCESS';
 }
 
 private static Decimal calculateSuccessRate(List<WorkflowStepResult> stepResults) {
@@ -660,70 +680,95 @@ public class WorkflowExecutionResult {
     }
 }
 
-public class WorkflowStepResult {
-    public String stepName;
-    public String stepDescription;
-    public DateTime startTime;
-    public DateTime endTime;
-    public String status;
-    public String output;
-    public String errorMessage;
-    public String details;
-}
-switch on documentType {
-    case 'CONFIDENTIAL':
-        sensitivityScore += 40;
-        break;
+// public class WorkflowStepResult {
+//     public String stepName;
+//     public String stepDescription;
+//     public DateTime startTime;
+//     public DateTime endTime;
+//     public String status;
+//     public String output;
+//     public String errorMessage;
+//     public String details;
+// }
+// switch on documentType {
+//     case 'CONFIDENTIAL':
+//         sensitivityScore += 40;
+//         break;
 
-    case 'CONTRACT':
-        sensitivityScore += 20;
-        break;
+//     case 'CONTRACT':
+//         sensitivityScore += 20;
+//         break;
 
-    case 'LEGAL':
-        sensitivityScore += 25;
-        break;
+//     case 'LEGAL':
+//         sensitivityScore += 25;
+//         break;
 
-    case 'BIOMETRIC':
-        sensitivityScore += 45;
-        break;
+//     case 'BIOMETRIC':
+//         sensitivityScore += 45;
+//         break;
 
-    case 'INTELLECTUAL_PROPERTY':
-        sensitivityScore += 35;
-        break;
+//     case 'INTELLECTUAL_PROPERTY':
+//         sensitivityScore += 35;
+//         break;
 
-    default:
-        sensitivityScore += 5;
-        break;
-}
-        // Additional scoring based on document content analysis
-        if (analysis.Content_Analysis__c != null) {
-            Map<String, Object> contentAnalysis = (Map<String, Object>) JSON.deserializeUntyped(analysis.Content_Analysis__c);
-            List<String> entities = (List<String>) contentAnalysis.get('extractedEntities');
+//     default:
+//         sensitivityScore += 5;
+//         break;
+// }
+//         // Additional scoring based on document content analysis
+//         if (analysis.Content_Analysis__c != null) {
+//             Map<String, Object> contentAnalysis = (Map<String, Object>) JSON.deserializeUntyped(analysis.Content_Analysis__c);
+//             List<String> entities = (List<String>) contentAnalysis.get('extractedEntities');
             
-            if (entities != null) {
-                for (String entity : entities) {
-                    if (entity.startsWith('EMAIL:') || entity.startsWith('SSN:') || entity.startsWith('PHONE:')) {
-                        sensitivityScore += 15;
-                    }
-                }
+//             if (entities != null) {
+//                 for (String entity : entities) {
+//                     if (entity.startsWith('EMAIL:') || entity.startsWith('SSN:') || entity.startsWith('PHONE:')) {
+//                         sensitivityScore += 15;
+//                     }
+//                 }
+//             }
+//         }
+
+//         // Classify sensitivity level
+//         if (sensitivityScore >= 80) {
+//             return 'CRITICAL';
+//         } else if (sensitivityScore >= 60) {
+//             return 'HIGH';
+//         } else if (sensitivityScore >= 30) {
+//             return 'MEDIUM';
+//         } else {
+//             return 'LOW';
+//         }
+        
+//     } catch (Exception e) {
+//         return 'UNKNOWN';
+//     }
+// }
+// }
+private static String determineOverallWorkflowStatus(List<WorkflowStepResult> stepResults) {
+    Boolean hasFailure = false;
+    Boolean hasWarning = false;
+
+    // Loop through all steps
+    for (WorkflowStepResult step : stepResults) {
+        switch on step.status {
+            when 'FAILED' {
+                hasFailure = true;
+                break; // failure overrides everything
+            }
+            when 'WARNING' {
+                hasWarning = true;
+            }
+            when else {
+                // SUCCESS or any other status → ignore
             }
         }
-
-        // Classify sensitivity level
-        if (sensitivityScore >= 80) {
-            return 'CRITICAL';
-        } else if (sensitivityScore >= 60) {
-            return 'HIGH';
-        } else if (sensitivityScore >= 30) {
-            return 'MEDIUM';
-        } else {
-            return 'LOW';
-        }
-        
-    } catch (Exception e) {
-        return 'UNKNOWN';
     }
-}
+
+    // Final decision
+    if (hasFailure) return 'FAILED';
+    if (hasWarning) return 'COMPLETED_WITH_WARNINGS';
+    return 'SUCCESS';
 }
 
 public class DocumentRiskAssessor {
@@ -848,52 +893,101 @@ public class DocumentRiskAssessor {
         return Math.min(100, riskScore);
     }
     
+    // private static Decimal assessOperationalRisk(String documentId, DocumentAnalysisRecord__c analysis) {
+    //     Decimal riskScore = 0;
+        
+    //     // Check document availability
+    //     List<SystemDowntime__c> downtimeRecords = [
+    //         SELECT Id FROM SystemDowntime__c 
+    //         WHERE CreatedDate >= :DateTime.now().addDays(-7)
+    //         AND Impact__c INCLUDES 'DOCUMENT_ACCESS'
+    //     ];
+    //     if (!downtimeRecords.isEmpty()) {
+    //         riskScore += 25;
+    //     }
+        
+    //     // Check backup status
+    //     List<DocumentBackup__c> backupRecords = [
+    //         SELECT Backup_Status__c FROM DocumentBackup__c 
+    //         WHERE Document__c = :documentId 
+    //         ORDER BY CreatedDate DESC 
+    //         LIMIT 1
+    //     ];
+    //     if (backupRecords.isEmpty() || backupRecords[0].Backup_Status__c != 'SUCCESS') {
+    //         riskScore += 30;
+    //     }
+        
+    //     // Check version control
+    //     List<ContentVersion> versions = [
+    //         SELECT Id FROM ContentVersion 
+    //         WHERE ContentDocumentId = :documentId
+    //     ];
+    //     if (versions.size() > 10) {
+    //         riskScore += 15; // Too many versions might indicate chaos
+    //     }
+        
+    //     // Check collaborative access
+    //     List<CollaborativeSession__c> activeSessions = [
+    //         SELECT Id FROM CollaborativeSession__c 
+    //         WHERE Document__c = :documentId 
+    //         AND Status__c = 'ACTIVE'
+    //     ];
+    //     if (activeSessions.size() > 5) {
+    //         riskScore += 20; // Too many concurrent collaborators
+    //     }
+        
+    //     return Math.min(100, riskScore);
+    // }
     private static Decimal assessOperationalRisk(String documentId, DocumentAnalysisRecord__c analysis) {
-        Decimal riskScore = 0;
-        
-        // Check document availability
-        List<SystemDowntime__c> downtimeRecords = [
-            SELECT Id FROM SystemDowntime__c 
-            WHERE CreatedDate >= :DateTime.now().addDays(-7)
-            AND Impact__c INCLUDES 'DOCUMENT_ACCESS'
-        ];
-        if (!downtimeRecords.isEmpty()) {
-            riskScore += 25;
-        }
-        
-        // Check backup status
-        List<DocumentBackup__c> backupRecords = [
-            SELECT Backup_Status__c FROM DocumentBackup__c 
-            WHERE Document__c = :documentId 
-            ORDER BY CreatedDate DESC 
-            LIMIT 1
-        ];
-        if (backupRecords.isEmpty() || backupRecords[0].Backup_Status__c != 'SUCCESS') {
-            riskScore += 30;
-        }
-        
-        // Check version control
-        List<ContentVersion> versions = [
-            SELECT Id FROM ContentVersion 
-            WHERE ContentDocumentId = :documentId
-        ];
-        if (versions.size() > 10) {
-            riskScore += 15; // Too many versions might indicate chaos
-        }
-        
-        // Check collaborative access
-        List<CollaborativeSession__c> activeSessions = [
-            SELECT Id FROM CollaborativeSession__c 
-            WHERE Document__c = :documentId 
-            AND Status__c = 'ACTIVE'
-        ];
-        if (activeSessions.size() > 5) {
-            riskScore += 20; // Too many concurrent collaborators
-        }
-        
-        return Math.min(100, riskScore);
+    Decimal riskScore = 0;
+    
+    // Check document availability (downtime in last 7 days)
+    List<SystemDowntime__c> downtimeRecords = [
+        SELECT Id 
+        FROM SystemDowntime__c 
+        WHERE CreatedDate >= :DateTime.now().addDays(-7)
+        AND Impact__c = 'DOCUMENT_ACCESS'   // or INCLUDES('DOCUMENT_ACCESS') if multi-picklist
+    ];
+    if (!downtimeRecords.isEmpty()) {
+        riskScore += 25;
     }
     
+    // Check backup status (latest record)
+    List<DocumentBackup__c> backupRecords = [
+        SELECT Backup_Status__c 
+        FROM DocumentBackup__c 
+        WHERE Document__c = :documentId 
+        ORDER BY CreatedDate DESC 
+        LIMIT 1
+    ];
+    if (backupRecords.isEmpty() || backupRecords[0].Backup_Status__c != 'SUCCESS') {
+        riskScore += 30;
+    }
+    
+    // Check version control
+    List<ContentVersion> versions = [
+        SELECT Id 
+        FROM ContentVersion 
+        WHERE ContentDocumentId = :documentId
+    ];
+    if (versions.size() > 10) {
+        riskScore += 15; // Too many versions might indicate chaos
+    }
+    
+    // Check collaborative access
+    List<CollaborativeSession__c> activeSessions = [
+        SELECT Id 
+        FROM CollaborativeSession__c 
+        WHERE Document__c = :documentId 
+        AND Status__c = 'ACTIVE'
+    ];
+    if (activeSessions.size() > 5) {
+        riskScore += 20; // Too many concurrent collaborators
+    }
+    
+    return Math.min(100, riskScore);
+}
+
     private static Decimal assessPrivacyRisk(String documentId, DocumentAnalysisRecord__c analysis) {
         Decimal riskScore = 0;
         
@@ -1064,47 +1158,124 @@ public class DocumentRiskAssessor {
         return 'MINIMAL';
     }
     
-    private static List<String> identifyRiskFactors(String documentId, DocumentAnalysisRecord__c analysis, RiskAssessmentResult result) {
-        List<String> factors = new List<String>();
+//     private static List<String> identifyRiskFactors(String documentId, DocumentAnalysisRecord__c analysis, RiskAssessmentResult result) {
+//         List<String> factors = new List<String>();
         
+//         if (result.securityRiskScore > 50) {
+//             factors.add('Inadequate security controls');
+//         }
+//         if (result.complianceRiskScore > 50) {
+//             factors.add('Compliance violations detected');
+//         }
+//         if (result.privacyRiskScore > 50) {
+//             factors.add('Privacy protection deficiencies');
+//         }
+//         if (result.operationalRiskScore > 50) {
+//             factors.add('Operational vulnerabilities');
+//         }
+//         case 'CONFIDENTIAL':
+//                     sensitivityScore += 40;
+//                     break;
+//                 case 'CONTRACT':
+//                     sensitivityScore += 20;
+//                     break;
+//                 case 'LEGAL':
+//                     sensitivityScore += 25;
+//                     break;
+//                 case 'BIOMETRIC':
+//                     sensitivityScore += 45;
+//                     break;
+//                 case 'INTELLECTUAL_PROPERTY':
+//                     sensitivityScore += 35;
+//                     break;
+//                 default:
+//                     sensitivityScore += 5;
+//                     break;
+//             }
+//         }
+
+//         // Additional scoring based on document content analysis
+//         if (analysis.Content_Analysis__c != null) {
+//             Map<String, Object> contentAnalysis = (Map<String, Object>) JSON.deserializeUntyped(analysis.Content_Analysis__c);
+//             List<String> entities = (List<String>) contentAnalysis.get('extractedEntities');
+            
+//             if (entities != null) {
+//                 for (String entity : entities) {
+//                     if (entity.startsWith('EMAIL:') || entity.startsWith('SSN:') || entity.startsWith('PHONE:')) {
+//                         sensitivityScore += 15;
+//                     }
+//                 }
+//             }
+//         }
+
+//         // Classify sensitivity level
+//         if (sensitivityScore >= 80) {
+//             return 'CRITICAL';
+//         } else if (sensitivityScore >= 60) {
+//             return 'HIGH';
+//         } else if (sensitivityScore >= 30) {
+//             return 'MEDIUM';
+//         } else {
+//             return 'LOW';
+//         }
+        
+//     } catch (Exception e) {
+//         return 'UNKNOWN';
+//     }
+// }
+
+private static RiskAnalysisResult analyzeDocumentRisk(
+    String documentId,
+    DocumentAnalysisRecord__c analysis,
+    RiskAssessmentResult result
+) {
+    RiskAnalysisResult output = new RiskAnalysisResult();
+    output.factors = new List<String>();
+    Integer sensitivityScore = 0;
+
+    try {
+        // ---- Risk Factors ----
         if (result.securityRiskScore > 50) {
-            factors.add('Inadequate security controls');
+            output.factors.add('Inadequate security controls');
         }
         if (result.complianceRiskScore > 50) {
-            factors.add('Compliance violations detected');
+            output.factors.add('Compliance violations detected');
         }
         if (result.privacyRiskScore > 50) {
-            factors.add('Privacy protection deficiencies');
+            output.factors.add('Privacy protection deficiencies');
         }
         if (result.operationalRiskScore > 50) {
-            factors.add('Operational vulnerabilities');
+            output.factors.add('Operational vulnerabilities');
         }
-        case 'CONFIDENTIAL':
-                    sensitivityScore += 40;
-                    break;
-                case 'CONTRACT':
-                    sensitivityScore += 20;
-                    break;
-                case 'LEGAL':
-                    sensitivityScore += 25;
-                    break;
-                case 'BIOMETRIC':
-                    sensitivityScore += 45;
-                    break;
-                case 'INTELLECTUAL_PROPERTY':
-                    sensitivityScore += 35;
-                    break;
-                default:
-                    sensitivityScore += 5;
-                    break;
+
+        // ---- Sensitivity Scoring ----
+        switch on analysis.Document_Type__c {
+            when 'CONFIDENTIAL' {
+                sensitivityScore += 40;
+            }
+            when 'CONTRACT' {
+                sensitivityScore += 20;
+            }
+            when 'LEGAL' {
+                sensitivityScore += 25;
+            }
+            when 'BIOMETRIC' {
+                sensitivityScore += 45;
+            }
+            when 'INTELLECTUAL_PROPERTY' {
+                sensitivityScore += 35;
+            }
+            when else {
+                sensitivityScore += 5;
             }
         }
 
-        // Additional scoring based on document content analysis
+        // Additional scoring based on content analysis JSON
         if (analysis.Content_Analysis__c != null) {
-            Map<String, Object> contentAnalysis = (Map<String, Object>) JSON.deserializeUntyped(analysis.Content_Analysis__c);
+            Map<String, Object> contentAnalysis = 
+                (Map<String, Object>) JSON.deserializeUntyped(analysis.Content_Analysis__c);
+
             List<String> entities = (List<String>) contentAnalysis.get('extractedEntities');
-            
             if (entities != null) {
                 for (String entity : entities) {
                     if (entity.startsWith('EMAIL:') || entity.startsWith('SSN:') || entity.startsWith('PHONE:')) {
@@ -1116,17 +1287,20 @@ public class DocumentRiskAssessor {
 
         // Classify sensitivity level
         if (sensitivityScore >= 80) {
-            return 'CRITICAL';
+            output.sensitivityLevel = 'CRITICAL';
         } else if (sensitivityScore >= 60) {
-            return 'HIGH';
+            output.sensitivityLevel = 'HIGH';
         } else if (sensitivityScore >= 30) {
-            return 'MEDIUM';
+            output.sensitivityLevel = 'MEDIUM';
         } else {
-            return 'LOW';
+            output.sensitivityLevel = 'LOW';
         }
-        
+
     } catch (Exception e) {
-        return 'UNKNOWN';
+        output.sensitivityLevel = 'UNKNOWN';
     }
+
+    return output;
+}
 }
 }

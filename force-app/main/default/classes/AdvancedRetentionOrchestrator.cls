@@ -289,7 +289,7 @@ public class AdvancedRetentionOrchestrator {
                 System.debug(LoggingLevel.ERROR, 'AI enhancement failed for document ' + documentId + ': ' + e.getMessage());
                 
                 // Log AI processing error
-                I'll continue from where the code was cut off and complete the Document Lifecycle Management implementation.
+                //I'll continue from where the code was cut off and complete the Document Lifecycle Management implementation.
             insert new AIProcessingError__c(
                 Document_Id__c = documentId,
                 Error_Type__c = 'AI_ENHANCEMENT_FAILURE',
@@ -645,66 +645,66 @@ public class DocumentExpirationEngine {
         Date expirationDate = policy.Expiration_Date__c;
         Date warningDate = expirationDate.addDays(-(Integer)policy.Warning_Period_Days__c);
         
-        I'll continue from where the Document Expiration Management System was cut off and complete the implementation.
-ExpirationProcessingResult result = new ExpirationProcessingResult();
-result.documentId = documentId;
-result.policyId = policy.Id;
-result.processingStartTime = DateTime.now();
-result.currentDate = today;
-result.expirationDate = expirationDate;
+        //I'll continue from where the Document Expiration Management System was cut off and complete the implementation.
+        ExpirationProcessingResult result = new ExpirationProcessingResult();
+        result.documentId = documentId;
+        result.policyId = policy.Id;
+        result.processingStartTime = DateTime.now();
+        result.currentDate = today;
+        result.expirationDate = expirationDate;
 
-try {
-    // Determine expiration status
-    if (today.daysBetween(expirationDate) <= 0) {
-        // Document has expired
-        result.expirationStatus = 'EXPIRED';
-        result.daysOverdue = today.daysBetween(expirationDate) * -1;
-        
-        // Check if still within grace period
-        Date gracePeriodEnd = expirationDate.addDays((Integer)policy.Grace_Period_Days__c);
-        if (today <= gracePeriodEnd) {
-            result.withinGracePeriod = true;
-            result.graceDaysRemaining = today.daysBetween(gracePeriodEnd);
+    try {
+        // Determine expiration status
+        if (today.daysBetween(expirationDate) <= 0) {
+            // Document has expired
+            result.expirationStatus = 'EXPIRED';
+            result.daysOverdue = today.daysBetween(expirationDate) * -1;
+            
+            // Check if still within grace period
+            Date gracePeriodEnd = expirationDate.addDays((Integer)policy.Grace_Period_Days__c);
+            if (today <= gracePeriodEnd) {
+                result.withinGracePeriod = true;
+                result.graceDaysRemaining = today.daysBetween(gracePeriodEnd);
+            } else {
+                result.withinGracePeriod = false;
+                result.graceDaysExceeded = gracePeriodEnd.daysBetween(today);
+            }
+            
+            // Execute expiration actions
+            executeExpirationActions(documentId, policy, result);
+            
+        } else if (today >= warningDate) {
+            // Document is in warning period
+            result.expirationStatus = 'WARNING';
+            result.daysUntilExpiration = today.daysBetween(expirationDate);
+            
+            // Send warning notifications
+            sendExpirationWarnings(documentId, policy, result);
+            
         } else {
-            result.withinGracePeriod = false;
-            result.graceDaysExceeded = gracePeriodEnd.daysBetween(today);
+            // Document is still valid
+            result.expirationStatus = 'VALID';
+            result.daysUntilWarning = today.daysBetween(warningDate);
+            result.daysUntilExpiration = today.daysBetween(expirationDate);
         }
         
-        // Execute expiration actions
-        executeExpirationActions(documentId, policy, result);
+        // Update document expiration tracking
+        updateExpirationTracking(documentId, result);
         
-    } else if (today >= warningDate) {
-        // Document is in warning period
-        result.expirationStatus = 'WARNING';
-        result.daysUntilExpiration = today.daysBetween(expirationDate);
+        result.success = true;
         
-        // Send warning notifications
-        sendExpirationWarnings(documentId, policy, result);
-        
-    } else {
-        // Document is still valid
-        result.expirationStatus = 'VALID';
-        result.daysUntilWarning = today.daysBetween(warningDate);
-        result.daysUntilExpiration = today.daysBetween(expirationDate);
+    } catch (Exception e) {
+        result.success = false;
+        result.errorMessage = e.getMessage();
+        result.stackTrace = e.getStackTraceString();
     }
-    
-    // Update document expiration tracking
-    updateExpirationTracking(documentId, result);
-    
-    result.success = true;
-    
-} catch (Exception e) {
-    result.success = false;
-    result.errorMessage = e.getMessage();
-    result.stackTrace = e.getStackTraceString();
-}
 
-result.processingEndTime = DateTime.now();
-result.totalProcessingTime = result.processingEndTime.getTime() - result.processingStartTime.getTime();
+    result.processingEndTime = DateTime.now();
+    result.totalProcessingTime = result.processingEndTime.getTime() - result.processingStartTime.getTime();
 
-// Log processing result
-logExpirationProcessingResult(result);
-}
+    // Log processing result
+    logExpirationProcessingResult(result);
+    }
 
 private static void executeExpirationActions(Id documentId, DocumentExpirationPolicy__c policy, ExpirationProcessingResult result) {
     List<String> actionsExecuted = new List<String>();
@@ -790,4 +790,6 @@ private static void updateExpirationTracking(Id documentId, ExpirationProcessing
     
     upsert tracking;
     result.trackingRecordId = tracking.Id;
+}
+}
 }

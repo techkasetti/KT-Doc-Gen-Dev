@@ -174,13 +174,42 @@ public class DocumentAnalyticsEngine {
         return metrics;
     }
     
+    //     private static ViewMetrics getViewMetrics(Id documentId) {
+    //     ViewMetrics metrics = new ViewMetrics();
+        
+    //     List<AggregateResult> viewStats = [
+    //         SELECT COUNT(Id) totalViews, 
+    //                AVG(Session_Duration__c) avgDuration,
+    //                COUNT(DISTINCT User_ID__c) uniqueUsers
+    //         FROM DocumentViewTracking__c 
+    //         WHERE Document_ID__c = :documentId
+    //     ];
+        
+    //     if (!viewStats.isEmpty()) {
+    //         AggregateResult stats = viewStats[0];
+    //         metrics.totalViews = (Integer)stats.get('totalViews');
+    //         metrics.averageDuration = (Decimal)stats.get('avgDuration');
+    //         metrics.uniqueUsers = (Integer)stats.get('uniqueUsers');
+    //     }
+        
+    //     // Get recent view activity (last 7 days)
+    //     metrics.recentViews = [
+    //         SELECT User_ID__c, View_Date__c, Session_Duration__c
+    //         FROM DocumentViewTracking__c 
+    //         WHERE Document_ID__c = :documentId 
+    //         AND View_Date__c >= :Date.today().addDays(-7)
+    //         ORDER BY View_Date__c DESC
+    //     ];
+        
+    //     return metrics;
+    // }
         private static ViewMetrics getViewMetrics(Id documentId) {
         ViewMetrics metrics = new ViewMetrics();
         
+        // First: get total views and average duration
         List<AggregateResult> viewStats = [
             SELECT COUNT(Id) totalViews, 
-                   AVG(Session_Duration__c) avgDuration,
-                   COUNT(DISTINCT User_ID__c) uniqueUsers
+                AVG(Session_Duration__c) avgDuration
             FROM DocumentViewTracking__c 
             WHERE Document_ID__c = :documentId
         ];
@@ -189,8 +218,16 @@ public class DocumentAnalyticsEngine {
             AggregateResult stats = viewStats[0];
             metrics.totalViews = (Integer)stats.get('totalViews');
             metrics.averageDuration = (Decimal)stats.get('avgDuration');
-            metrics.uniqueUsers = (Integer)stats.get('uniqueUsers');
         }
+        
+        // Second: count unique users with GROUP BY
+        List<AggregateResult> uniqueUserStats = [
+            SELECT COUNT(Id) userCount
+            FROM DocumentViewTracking__c
+            WHERE Document_ID__c = :documentId
+            GROUP BY User_ID__c
+        ];
+        metrics.uniqueUsers = uniqueUserStats.size();
         
         // Get recent view activity (last 7 days)
         metrics.recentViews = [
@@ -203,6 +240,7 @@ public class DocumentAnalyticsEngine {
         
         return metrics;
     }
+
     // Main report generator
     @AuraEnabled(cacheable=true)
     public static AnalyticsReport generateComprehensiveReport(String reportType, Integer dayRange, String folderId) {

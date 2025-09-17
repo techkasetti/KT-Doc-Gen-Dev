@@ -149,16 +149,25 @@ public class DocumentArchivalManager {
         updateRetentionScheduleStats(policyId, archivalRecords.size());
     }
     
+    // private static Boolean checkLegalHoldStatus(String documentId) {
+    //     Integer holdCount = [
+    //         SELECT COUNT() 
+    //         FROM LegalHold__c 
+    //         WHERE Status__c = 'ACTIVE' 
+    //         AND Document_Scope__c INCLUDES :documentId
+    //     ];
+    //     return holdCount > 0;
+    // }
     private static Boolean checkLegalHoldStatus(String documentId) {
-        Integer holdCount = [
-            SELECT COUNT() 
-            FROM LegalHold__c 
-            WHERE Status__c = 'ACTIVE' 
-            AND Document_Scope__c INCLUDES :documentId
-        ];
-        return holdCount > 0;
-    }
-    
+    Integer holdCount = [
+        SELECT COUNT() 
+        FROM LegalHold__c 
+        WHERE Status__c = 'ACTIVE' 
+        AND Document_Scope__c INCLUDES (:documentId)
+    ];
+    return holdCount > 0;
+}
+
     private static void archiveDocument(ContentDocument doc, DocumentRetentionPolicy__c policy) {
         // Archive to specified location with encryption
         ArchiveService.archiveDocument(doc.Id, policy.Archive_Location__c, policy.Encryption_Required__c);

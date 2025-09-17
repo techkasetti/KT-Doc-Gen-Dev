@@ -661,3 +661,4 @@ public class RegulatoryFramework {
 
 // Custom exception class
 public class AnaraException extends Exception {}
+}

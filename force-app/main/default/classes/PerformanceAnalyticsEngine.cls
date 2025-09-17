@@ -48,152 +48,334 @@ public class PerformanceAnalyticsEngine {
         }
     }
     
+    // /**
+    //  * Calculate real-time system performance metrics
+    //  */
+    // private static SystemMetrics calculateSystemMetrics() {
+    //     List<AggregateResult> performanceData = [
+    //         SELECT 
+    //             AVG(ResponseTime__c) avgResponseTime,
+    //             MAX(ResponseTime__c) maxResponseTime,
+    //             COUNT(Id) totalRequests,
+    //             SUM(CASE WHEN ResponseTime__c <= 5 THEN 1 ELSE 0 END) fastResponses
+    //         FROM SystemPerformanceLog__c 
+    //         WHERE CreatedDate = LAST_N_HOURS:24
+    //     ];
+
+    //     Decimal avgResponseTime = 0;
+    //     Decimal maxResponseTime = 0;
+    //     Integer totalRequests = 0;
+    //     Decimal responseTimeCompliance = 100;
+
+    //     if (!performanceData.isEmpty()) {
+    //         AggregateResult data = performanceData[0];
+
+    //         avgResponseTime = data.get('avgResponseTime') != null ? (Decimal)data.get('avgResponseTime') : 0;
+    //         maxResponseTime = data.get('maxResponseTime') != null ? (Decimal)data.get('maxResponseTime') : 0;
+    //         totalRequests = data.get('totalRequests') != null ? (Integer)data.get('totalRequests') : 0;
+    //         Integer fastResponses = data.get('fastResponses') != null ? (Integer)data.get('fastResponses') : 0;
+
+    //         if (totalRequests > 0) {
+    //             responseTimeCompliance = (Decimal.valueOf(fastResponses) / totalRequests) * 100;
+    //         }
+    //     }
+
+    //     Decimal uptimePercentage = calculateUptimePercentage();
+    //     Integer currentConcurrentUsers = getCurrentConcurrentUsers();
+    //     Integer maxConcurrentUsers = getMaxConcurrentUsers();
+
+    //     Decimal systemHealthScore = calculateSystemHealthScore(
+    //         avgResponseTime,
+    //         uptimePercentage,
+    //         responseTimeCompliance,
+    //         currentConcurrentUsers
+    //     );
+
+    //     return new SystemMetrics(
+    //         avgResponseTime,
+    //         maxResponseTime,
+    //         responseTimeCompliance,
+    //         uptimePercentage,
+    //         currentConcurrentUsers,
+    //         maxConcurrentUsers,
+    //         systemHealthScore,
+    //         totalRequests
+    //     );
+    // }
+
     /**
-     * Calculate real-time system performance metrics
-     */
-    private static SystemMetrics calculateSystemMetrics() {
-        List<AggregateResult> performanceData = [
-            SELECT 
-                AVG(ResponseTime__c) avgResponseTime,
-                MAX(ResponseTime__c) maxResponseTime,
-                COUNT(Id) totalRequests,
-                SUM(CASE WHEN ResponseTime__c <= 5 THEN 1 ELSE 0 END) fastResponses
-            FROM SystemPerformanceLog__c 
-            WHERE CreatedDate = LAST_N_HOURS:24
-        ];
+ * Calculate real-time system performance metrics
+ */
+private static SystemMetrics calculateSystemMetrics() {
+    // 24-hour window
+    DateTime since = System.now().addHours(-24);
 
-        Decimal avgResponseTime = 0;
-        Decimal maxResponseTime = 0;
-        Integer totalRequests = 0;
-        Decimal responseTimeCompliance = 100;
+    // Aggregate metrics (avg, max, count)
+    List<AggregateResult> performanceData = [
+        SELECT
+            AVG(ResponseTime__c) avgResponseTime,
+            MAX(ResponseTime__c) maxResponseTime,
+            COUNT(Id) totalRequests
+        FROM SystemPerformanceLog__c
+        WHERE CreatedDate >= :since
+    ];
 
-        if (!performanceData.isEmpty()) {
-            AggregateResult data = performanceData[0];
+    // Count of "fast" responses (<= 5)
+    Integer fastResponses = [
+        SELECT COUNT()
+        FROM SystemPerformanceLog__c
+        WHERE CreatedDate >= :since
+        AND ResponseTime__c <= 5
+    ];
 
-            avgResponseTime = data.get('avgResponseTime') != null ? (Decimal)data.get('avgResponseTime') : 0;
-            maxResponseTime = data.get('maxResponseTime') != null ? (Decimal)data.get('maxResponseTime') : 0;
-            totalRequests = data.get('totalRequests') != null ? (Integer)data.get('totalRequests') : 0;
-            Integer fastResponses = data.get('fastResponses') != null ? (Integer)data.get('fastResponses') : 0;
+    // Defaults
+    Decimal avgResponseTime = 0;
+    Decimal maxResponseTime = 0;
+    Integer totalRequests = 0;
+    Decimal responseTimeCompliance = 100;
 
-            if (totalRequests > 0) {
-                responseTimeCompliance = (Decimal.valueOf(fastResponses) / totalRequests) * 100;
-            }
+    if (!performanceData.isEmpty()) {
+        AggregateResult ar = performanceData[0];
+
+        // Use safe conversion via String to avoid casting issues
+        if (ar.get('avgResponseTime') != null) {
+            avgResponseTime = Decimal.valueOf(String.valueOf(ar.get('avgResponseTime')));
+        }
+        if (ar.get('maxResponseTime') != null) {
+            maxResponseTime = Decimal.valueOf(String.valueOf(ar.get('maxResponseTime')));
+        }
+        if (ar.get('totalRequests') != null) {
+            totalRequests = Integer.valueOf(String.valueOf(ar.get('totalRequests')));
         }
 
-        Decimal uptimePercentage = calculateUptimePercentage();
-        Integer currentConcurrentUsers = getCurrentConcurrentUsers();
-        Integer maxConcurrentUsers = getMaxConcurrentUsers();
-
-        Decimal systemHealthScore = calculateSystemHealthScore(
-            avgResponseTime,
-            uptimePercentage,
-            responseTimeCompliance,
-            currentConcurrentUsers
-        );
-
-        return new SystemMetrics(
-            avgResponseTime,
-            maxResponseTime,
-            responseTimeCompliance,
-            uptimePercentage,
-            currentConcurrentUsers,
-            maxConcurrentUsers,
-            systemHealthScore,
-            totalRequests
-        );
+        if (totalRequests > 0) {
+            responseTimeCompliance = (Decimal.valueOf(fastResponses) / Decimal.valueOf(totalRequests)) * 100;
+        }
     }
 
-    
-    /**
-     * Calculate document processing analytics
-     */
-    private static DocumentAnalytics calculateDocumentAnalytics() {
-        // Document generation performance
-        List<AggregateResult> generationStats = [
-            SELECT 
-                COUNT(Id) totalGenerated,
-                AVG(GenerationTime__c) avgGenerationTime,
-                SUM(CASE WHEN ProcessingStatus__c = 'Completed' THEN 1 ELSE 0 END) completedDocs,
-                SUM(CASE WHEN ProcessingStatus__c = 'Failed' THEN 1 ELSE 0 END) failedDocs
-            FROM DocumentLifecycleConfiguration__c 
-            WHERE CreatedDate = LAST_N_DAYS:30
-        ];
+    // Other metrics (your existing helper methods)
+    Decimal uptimePercentage = calculateUptimePercentage();
+    Integer currentConcurrentUsers = getCurrentConcurrentUsers();
+    Integer maxConcurrentUsers = getMaxConcurrentUsers();
+
+    Decimal systemHealthScore = calculateSystemHealthScore(
+        avgResponseTime,
+        uptimePercentage,
+        responseTimeCompliance,
+        currentConcurrentUsers
+    );
+
+    return new SystemMetrics(
+        avgResponseTime,
+        maxResponseTime,
+        responseTimeCompliance,
+        uptimePercentage,
+        currentConcurrentUsers,
+        maxConcurrentUsers,
+        systemHealthScore,
+        totalRequests
+    );
+}
+
+    // /**
+    //  * Calculate document processing analytics
+    //  */
+    // private static DocumentAnalytics calculateDocumentAnalytics() {
+    //     // Document generation performance
+    //     List<AggregateResult> generationStats = [
+    //         SELECT 
+    //             COUNT(Id) totalGenerated,
+    //             AVG(GenerationTime__c) avgGenerationTime,
+    //             SUM(CASE WHEN ProcessingStatus__c = 'Completed' THEN 1 ELSE 0 END) completedDocs,
+    //             SUM(CASE WHEN ProcessingStatus__c = 'Failed' THEN 1 ELSE 0 END) failedDocs
+    //         FROM DocumentLifecycleConfiguration__c 
+    //         WHERE CreatedDate = LAST_N_DAYS:30
+    //     ];
         
-        Integer totalGenerated = 0;
-        Decimal avgGenerationTime = 0;
-        Integer completedDocs = 0;
-        Integer failedDocs = 0;
-        Decimal successRate = 100;
+    //     Integer totalGenerated = 0;
+    //     Decimal avgGenerationTime = 0;
+    //     Integer completedDocs = 0;
+    //     Integer failedDocs = 0;
+    //     Decimal successRate = 100;
         
-        if (!generationStats.isEmpty()) {
-            AggregateResult stats = generationStats[0];
-            totalGenerated = (Integer)stats.get('totalGenerated') != null ? (Integer)stats.get('totalGenerated') : 0;
-            avgGenerationTime = (Decimal)stats.get('avgGenerationTime') != null ? (Decimal)stats.get('avgGenerationTime') : 0;
-            completedDocs = (Integer)stats.get('completedDocs') != null ? (Integer)stats.get('completedDocs') : 0;
-            failedDocs = (Integer)stats.get('failedDocs') != null ? (Integer)stats.get('failedDocs') : 0;
+    //     if (!generationStats.isEmpty()) {
+    //         AggregateResult stats = generationStats[0];
+    //         totalGenerated = (Integer)stats.get('totalGenerated') != null ? (Integer)stats.get('totalGenerated') : 0;
+    //         avgGenerationTime = (Decimal)stats.get('avgGenerationTime') != null ? (Decimal)stats.get('avgGenerationTime') : 0;
+    //         completedDocs = (Integer)stats.get('completedDocs') != null ? (Integer)stats.get('completedDocs') : 0;
+    //         failedDocs = (Integer)stats.get('failedDocs') != null ? (Integer)stats.get('failedDocs') : 0;
 
-            if (totalGenerated > 0) {
-                successRate = (Decimal.valueOf(completedDocs) / totalGenerated) * 100;
-            }
-        }
+    //         if (totalGenerated > 0) {
+    //             successRate = (Decimal.valueOf(completedDocs) / totalGenerated) * 100;
+    //         }
+    //     }
 
-        // Signature completion analytics
-        List<AggregateResult> signatureStats = [
-            SELECT 
-                COUNT(Id) totalSignatureRequests,
-                AVG(CompletionTime__c) avgCompletionTime,
-                SUM(CASE WHEN Status__c = 'Signed' THEN 1 ELSE 0 END) completedSignatures,
-                SUM(CASE WHEN Status__c = 'Rejected' THEN 1 ELSE 0 END) rejectedSignatures,
-                SUM(CASE WHEN Status__c = 'Expired' THEN 1 ELSE 0 END) expiredSignatures
-            FROM Signature_Request__c 
-            WHERE CreatedDate = LAST_N_DAYS:30
-        ];
+    //     // Signature completion analytics
+    //     List<AggregateResult> signatureStats = [
+    //         SELECT 
+    //             COUNT(Id) totalSignatureRequests,
+    //             AVG(CompletionTime__c) avgCompletionTime,
+    //             SUM(CASE WHEN Status__c = 'Signed' THEN 1 ELSE 0 END) completedSignatures,
+    //             SUM(CASE WHEN Status__c = 'Rejected' THEN 1 ELSE 0 END) rejectedSignatures,
+    //             SUM(CASE WHEN Status__c = 'Expired' THEN 1 ELSE 0 END) expiredSignatures
+    //         FROM Signature_Request__c 
+    //         WHERE CreatedDate = LAST_N_DAYS:30
+    //     ];
 
-        Integer totalSignatureRequests = 0;
-        Decimal avgCompletionTime = 0;
-        Integer completedSignatures = 0;
-        Integer rejectedSignatures = 0;
-        Integer expiredSignatures = 0;
-        Decimal signatureSuccessRate = 100;
+    //     Integer totalSignatureRequests = 0;
+    //     Decimal avgCompletionTime = 0;
+    //     Integer completedSignatures = 0;
+    //     Integer rejectedSignatures = 0;
+    //     Integer expiredSignatures = 0;
+    //     Decimal signatureSuccessRate = 100;
 
-        if (!signatureStats.isEmpty()) {
-            AggregateResult sigStats = signatureStats[0];
-            totalSignatureRequests = (Integer)sigStats.get('totalSignatureRequests') != null ? (Integer)sigStats.get('totalSignatureRequests') : 0;
-            avgCompletionTime = (Decimal)sigStats.get('avgCompletionTime') != null ? (Decimal)sigStats.get('avgCompletionTime') : 0;
-            completedSignatures = (Integer)sigStats.get('completedSignatures') != null ? (Integer)sigStats.get('completedSignatures') : 0;
-            rejectedSignatures = (Integer)sigStats.get('rejectedSignatures') != null ? (Integer)sigStats.get('rejectedSignatures') : 0;
-            expiredSignatures = (Integer)sigStats.get('expiredSignatures') != null ? (Integer)sigStats.get('expiredSignatures') : 0;
+    //     if (!signatureStats.isEmpty()) {
+    //         AggregateResult sigStats = signatureStats[0];
+    //         totalSignatureRequests = (Integer)sigStats.get('totalSignatureRequests') != null ? (Integer)sigStats.get('totalSignatureRequests') : 0;
+    //         avgCompletionTime = (Decimal)sigStats.get('avgCompletionTime') != null ? (Decimal)sigStats.get('avgCompletionTime') : 0;
+    //         completedSignatures = (Integer)sigStats.get('completedSignatures') != null ? (Integer)sigStats.get('completedSignatures') : 0;
+    //         rejectedSignatures = (Integer)sigStats.get('rejectedSignatures') != null ? (Integer)sigStats.get('rejectedSignatures') : 0;
+    //         expiredSignatures = (Integer)sigStats.get('expiredSignatures') != null ? (Integer)sigStats.get('expiredSignatures') : 0;
             
-            if (totalSignatureRequests > 0) {
-                signatureSuccessRate = (Decimal.valueOf(completedSignatures) / totalSignatureRequests) * 100;
-            }
+    //         if (totalSignatureRequests > 0) {
+    //             signatureSuccessRate = (Decimal.valueOf(completedSignatures) / totalSignatureRequests) * 100;
+    //         }
+    //     }
+
+    //     // Document type performance breakdown
+    //     Map<String, DocumentTypeMetrics> documentTypePerformance = calculateDocumentTypePerformance();
+
+    //     // Processing queue metrics
+    //     QueueMetrics queueMetrics = calculateQueueMetrics();
+
+    //     // Volume trends over time
+    //     List<VolumeDataPoint> volumeTrends = calculateVolumeTrends();
+
+    //     return new DocumentAnalytics(
+    //         totalGenerated,
+    //         avgGenerationTime,
+    //         successRate,
+    //         totalSignatureRequests,
+    //         avgCompletionTime,
+    //         signatureSuccessRate,
+    //         completedDocs,
+    //         failedDocs,
+    //         rejectedSignatures,
+    //         expiredSignatures,
+    //         documentTypePerformance,
+    //         queueMetrics,
+    //         volumeTrends
+    //     );
+    // }
+/**
+ * Calculate document processing analytics
+ */
+private static DocumentAnalytics calculateDocumentAnalytics() {
+    DateTime since = System.now().addDays(-30);
+
+    // Document generation performance
+    List<AggregateResult> generationStats = [
+        SELECT 
+            COUNT(Id) totalGenerated,
+            AVG(GenerationTime__c) avgGenerationTime
+        FROM DocumentLifecycleConfiguration__c 
+        WHERE CreatedDate >= :since
+    ];
+
+    Integer completedDocs = [
+        SELECT COUNT()
+        FROM DocumentLifecycleConfiguration__c
+        WHERE CreatedDate >= :since AND ProcessingStatus__c = 'Completed'
+    ];
+
+    Integer failedDocs = [
+        SELECT COUNT()
+        FROM DocumentLifecycleConfiguration__c
+        WHERE CreatedDate >= :since AND ProcessingStatus__c = 'Failed'
+    ];
+
+    Integer totalGenerated = 0;
+    Decimal avgGenerationTime = 0;
+    Decimal successRate = 100;
+
+    if (!generationStats.isEmpty()) {
+        AggregateResult stats = generationStats[0];
+        totalGenerated = (Integer)stats.get('totalGenerated') != null ? (Integer)stats.get('totalGenerated') : 0;
+        avgGenerationTime = stats.get('avgGenerationTime') != null ? 
+                            Decimal.valueOf(String.valueOf(stats.get('avgGenerationTime'))) : 0;
+
+        if (totalGenerated > 0) {
+            successRate = (Decimal.valueOf(completedDocs) / totalGenerated) * 100;
         }
-
-        // Document type performance breakdown
-        Map<String, DocumentTypeMetrics> documentTypePerformance = calculateDocumentTypePerformance();
-
-        // Processing queue metrics
-        QueueMetrics queueMetrics = calculateQueueMetrics();
-
-        // Volume trends over time
-        List<VolumeDataPoint> volumeTrends = calculateVolumeTrends();
-
-        return new DocumentAnalytics(
-            totalGenerated,
-            avgGenerationTime,
-            successRate,
-            totalSignatureRequests,
-            avgCompletionTime,
-            signatureSuccessRate,
-            completedDocs,
-            failedDocs,
-            rejectedSignatures,
-            expiredSignatures,
-            documentTypePerformance,
-            queueMetrics,
-            volumeTrends
-        );
     }
+
+    // Signature completion analytics
+    List<AggregateResult> signatureStats = [
+        SELECT 
+            COUNT(Id) totalSignatureRequests,
+            AVG(CompletionTime__c) avgCompletionTime
+        FROM Signature_Request__c 
+        WHERE CreatedDate >= :since
+    ];
+
+    Integer completedSignatures = [
+        SELECT COUNT() 
+        FROM Signature_Request__c 
+        WHERE CreatedDate >= :since AND Status__c = 'Signed'
+    ];
+
+    Integer rejectedSignatures = [
+        SELECT COUNT() 
+        FROM Signature_Request__c 
+        WHERE CreatedDate >= :since AND Status__c = 'Rejected'
+    ];
+
+    Integer expiredSignatures = [
+        SELECT COUNT() 
+        FROM Signature_Request__c 
+        WHERE CreatedDate >= :since AND Status__c = 'Expired'
+    ];
+
+    Integer totalSignatureRequests = 0;
+    Decimal avgCompletionTime = 0;
+    Decimal signatureSuccessRate = 100;
+
+    if (!signatureStats.isEmpty()) {
+        AggregateResult sigStats = signatureStats[0];
+        totalSignatureRequests = (Integer)sigStats.get('totalSignatureRequests') != null ? (Integer)sigStats.get('totalSignatureRequests') : 0;
+        avgCompletionTime = sigStats.get('avgCompletionTime') != null ?
+                            Decimal.valueOf(String.valueOf(sigStats.get('avgCompletionTime'))) : 0;
+
+        if (totalSignatureRequests > 0) {
+            signatureSuccessRate = (Decimal.valueOf(completedSignatures) / totalSignatureRequests) * 100;
+        }
+    }
+
+    // Document type performance breakdown
+    Map<String, DocumentTypeMetrics> documentTypePerformance = calculateDocumentTypePerformance();
+
+    // Processing queue metrics
+    QueueMetrics queueMetrics = calculateQueueMetrics();
+
+    // Volume trends over time
+    List<VolumeDataPoint> volumeTrends = calculateVolumeTrends();
+
+    return new DocumentAnalytics(
+        totalGenerated,
+        avgGenerationTime,
+        successRate,
+        totalSignatureRequests,
+        avgCompletionTime,
+        signatureSuccessRate,
+        completedDocs,
+        failedDocs,
+        rejectedSignatures,
+        expiredSignatures,
+        documentTypePerformance,
+        queueMetrics,
+        volumeTrends
+    );
+}
 
     /**
      * Calculate user activity and engagement metrics
@@ -280,57 +462,113 @@ public class PerformanceAnalyticsEngine {
     /**
      * Calculate compliance monitoring metrics
      */
-    private static ComplianceMetrics calculateComplianceMetrics() {
-        // Compliance check results
-        List<AggregateResult> complianceStats = [
-            SELECT 
-                COUNT(Id) totalChecks,
-                SUM(CASE WHEN ComplianceStatus__c = 'Compliant' THEN 1 ELSE 0 END) compliantDocs,
-                SUM(CASE WHEN ComplianceStatus__c = 'Non-Compliant' THEN 1 ELSE 0 END) nonCompliantDocs,
-                SUM(CASE WHEN ComplianceStatus__c = 'Requires Review' THEN 1 ELSE 0 END) reviewRequiredDocs
-            FROM DocumentLifecycleConfiguration__c 
-            WHERE CreatedDate = LAST_N_DAYS:30
-            AND ComplianceStatus__c != null
-        ];
+    // private static ComplianceMetrics calculateComplianceMetrics() {
+    //     // Compliance check results
+    //     List<AggregateResult> complianceStats = [
+    //         SELECT 
+    //             COUNT(Id) totalChecks,
+    //             SUM(CASE WHEN ComplianceStatus__c = 'Compliant' THEN 1 ELSE 0 END) compliantDocs,
+    //             SUM(CASE WHEN ComplianceStatus__c = 'Non-Compliant' THEN 1 ELSE 0 END) nonCompliantDocs,
+    //             SUM(CASE WHEN ComplianceStatus__c = 'Requires Review' THEN 1 ELSE 0 END) reviewRequiredDocs
+    //         FROM DocumentLifecycleConfiguration__c 
+    //         WHERE CreatedDate = LAST_N_DAYS:30
+    //         AND ComplianceStatus__c != null
+    //     ];
         
-        Integer totalChecks = 0;
-        Integer compliantDocs = 0;
-        Integer nonCompliantDocs = 0;
-        Integer reviewRequiredDocs = 0;
-        Decimal complianceRate = 100;
+    //     Integer totalChecks = 0;
+    //     Integer compliantDocs = 0;
+    //     Integer nonCompliantDocs = 0;
+    //     Integer reviewRequiredDocs = 0;
+    //     Decimal complianceRate = 100;
         
-        if (!complianceStats.isEmpty()) {
-            AggregateResult stats = complianceStats[0];
-            totalChecks = (Integer)stats.get('totalChecks') != null ? (Integer)stats.get('totalChecks') : 0;
-            compliantDocs = (Integer)stats.get('compliantDocs') != null ? (Integer)stats.get('compliantDocs') : 0;
-            nonCompliantDocs = (Integer)stats.get('nonCompliantDocs') != null ? (Integer)stats.get('nonCompliantDocs') : 0;
-            reviewRequiredDocs = (Integer)stats.get('reviewRequiredDocs') != null ? (Integer)stats.get('reviewRequiredDocs') : 0;
+    //     if (!complianceStats.isEmpty()) {
+    //         AggregateResult stats = complianceStats[0];
+    //         totalChecks = (Integer)stats.get('totalChecks') != null ? (Integer)stats.get('totalChecks') : 0;
+    //         compliantDocs = (Integer)stats.get('compliantDocs') != null ? (Integer)stats.get('compliantDocs') : 0;
+    //         nonCompliantDocs = (Integer)stats.get('nonCompliantDocs') != null ? (Integer)stats.get('nonCompliantDocs') : 0;
+    //         reviewRequiredDocs = (Integer)stats.get('reviewRequiredDocs') != null ? (Integer)stats.get('reviewRequiredDocs') : 0;
             
-            if (totalChecks > 0) {
-                complianceRate = (Decimal.valueOf(compliantDocs) / totalChecks) * 100;
-            }
-        }
+    //         if (totalChecks > 0) {
+    //             complianceRate = (Decimal.valueOf(compliantDocs) / totalChecks) * 100;
+    //         }
+    //     }
         
-        // Regional compliance breakdown
-        Map<String, RegionalComplianceMetrics> regionalCompliance = calculateRegionalCompliance();
+    //     // Regional compliance breakdown
+    //     Map<String, RegionalComplianceMetrics> regionalCompliance = calculateRegionalCompliance();
         
-        // Compliance violation trends
-        List<ComplianceViolationTrend> violationTrends = calculateComplianceViolationTrends();
+    //     // Compliance violation trends
+    //     List<ComplianceViolationTrend> violationTrends = calculateComplianceViolationTrends();
         
-        // Audit trail completeness
-        Decimal auditTrailCompleteness = calculateAuditTrailCompleteness();
+    //     // Audit trail completeness
+    //     Decimal auditTrailCompleteness = calculateAuditTrailCompleteness();
         
-        return new ComplianceMetrics(
-            totalChecks,
-            complianceRate,
-            compliantDocs,
-            nonCompliantDocs,
-            reviewRequiredDocs,
-            regionalCompliance,
-            violationTrends,
-            auditTrailCompleteness
-        );
+    //     return new ComplianceMetrics(
+    //         totalChecks,
+    //         complianceRate,
+    //         compliantDocs,
+    //         nonCompliantDocs,
+    //         reviewRequiredDocs,
+    //         regionalCompliance,
+    //         violationTrends,
+    //         auditTrailCompleteness
+    //     );
+    // }
+private static ComplianceMetrics calculateComplianceMetrics() {
+    DateTime since = System.now().addDays(-30);
+
+    // Total checks
+    Integer totalChecks = [
+        SELECT COUNT() 
+        FROM DocumentLifecycleConfiguration__c 
+        WHERE CreatedDate >= :since AND ComplianceStatus__c != null
+    ];
+
+    // Compliant
+    Integer compliantDocs = [
+        SELECT COUNT() 
+        FROM DocumentLifecycleConfiguration__c 
+        WHERE CreatedDate >= :since AND ComplianceStatus__c = 'Compliant'
+    ];
+
+    // Non-Compliant
+    Integer nonCompliantDocs = [
+        SELECT COUNT() 
+        FROM DocumentLifecycleConfiguration__c 
+        WHERE CreatedDate >= :since AND ComplianceStatus__c = 'Non-Compliant'
+    ];
+
+    // Requires Review
+    Integer reviewRequiredDocs = [
+        SELECT COUNT() 
+        FROM DocumentLifecycleConfiguration__c 
+        WHERE CreatedDate >= :since AND ComplianceStatus__c = 'Requires Review'
+    ];
+
+    Decimal complianceRate = 100;
+    if (totalChecks > 0) {
+        complianceRate = (Decimal.valueOf(compliantDocs) / totalChecks) * 100;
     }
+
+    // Regional compliance breakdown
+    Map<String, RegionalComplianceMetrics> regionalCompliance = calculateRegionalCompliance();
+
+    // Compliance violation trends
+    List<ComplianceViolationTrend> violationTrends = calculateComplianceViolationTrends();
+
+    // Audit trail completeness
+    Decimal auditTrailCompleteness = calculateAuditTrailCompleteness();
+
+    return new ComplianceMetrics(
+        totalChecks,
+        complianceRate,
+        compliantDocs,
+        nonCompliantDocs,
+        reviewRequiredDocs,
+        regionalCompliance,
+        violationTrends,
+        auditTrailCompleteness
+    );
+}
 
     /**
      * Generate performance recommendations based on metrics
@@ -405,35 +643,73 @@ public class PerformanceAnalyticsEngine {
     }
 
     // Helper Methods
-    private static Decimal calculateUptimePercentage() {
-        // Query system downtime events in the last 24 hours
-        List<AggregateResult> downtimeData = [
-            SELECT SUM(DowntimeDuration__c) totalDowntime
-            FROM SystemDowntimeLog__c 
-            WHERE CreatedDate = LAST_N_HOURS:24
-        ];
+    // private static Decimal calculateUptimePercentage() {
+    //     // Query system downtime events in the last 24 hours
+    //     List<AggregateResult> downtimeData = [
+    //         SELECT SUM(DowntimeDuration__c) totalDowntime
+    //         FROM SystemDowntimeLog__c 
+    //         WHERE CreatedDate = LAST_N_HOURS:24
+    //     ];
         
-        Decimal totalDowntimeMinutes = !downtimeData.isEmpty() ? 
-            (Decimal)downtimeData[0].get('totalDowntime') : 0;
+    //     Decimal totalDowntimeMinutes = !downtimeData.isEmpty() ? 
+    //         (Decimal)downtimeData[0].get('totalDowntime') : 0;
         
-        Decimal totalMinutesIn24Hours = 24 * 60;
-        Decimal uptimeMinutes = totalMinutesIn24Hours - (totalDowntimeMinutes != null ? totalDowntimeMinutes : 0);
+    //     Decimal totalMinutesIn24Hours = 24 * 60;
+    //     Decimal uptimeMinutes = totalMinutesIn24Hours - (totalDowntimeMinutes != null ? totalDowntimeMinutes : 0);
         
-        return (uptimeMinutes / totalMinutesIn24Hours) * 100;
-    }
+    //     return (uptimeMinutes / totalMinutesIn24Hours) * 100;
+    // }
+private static Decimal calculateUptimePercentage() {
+    // Get start datetime (24 hours ago)
+    DateTime since = System.now().addHours(-24);
 
-    private static Integer getCurrentConcurrentUsers() {
-        // Count active sessions in the last 30 minutes
-        List<AggregateResult> activeSessionsData = [
-            SELECT COUNT_DISTINCT(UserId__c) activeSessions
-            FROM UserActivity__c 
-            WHERE CreatedDate = LAST_N_MINUTES:30
-            AND SessionStatus__c = 'Active'
-        ];
+    // Query downtime in the last 24 hours
+    List<AggregateResult> downtimeData = [
+        SELECT SUM(DowntimeDuration__c) totalDowntime
+        FROM SystemDowntimeLog__c 
+        WHERE CreatedDate >= :since
+    ];
+    
+    Decimal totalDowntimeMinutes = (downtimeData.isEmpty() || downtimeData[0].get('totalDowntime') == null) 
+        ? 0 
+        : (Decimal)downtimeData[0].get('totalDowntime');
+    
+    Decimal totalMinutesIn24Hours = 24 * 60;
+    Decimal uptimeMinutes = totalMinutesIn24Hours - totalDowntimeMinutes;
+    
+    return (uptimeMinutes / totalMinutesIn24Hours) * 100;
+}
+
+    // private static Integer getCurrentConcurrentUsers() {
+    //     // Count active sessions in the last 30 minutes
+    //     List<AggregateResult> activeSessionsData = [
+    //         SELECT COUNT_DISTINCT(UserId__c) activeSessions
+    //         FROM UserActivity__c 
+    //         WHERE CreatedDate = LAST_N_MINUTES:30
+    //         AND SessionStatus__c = 'Active'
+    //     ];
         
-        return !activeSessionsData.isEmpty() ? 
-            (Integer)activeSessionsData[0].get('activeSessions') : 0;
-    }
+    //     return !activeSessionsData.isEmpty() ? 
+    //         (Integer)activeSessionsData[0].get('activeSessions') : 0;
+    // }
+    
+    private static Integer getCurrentConcurrentUsers() {
+    // Define window (last 30 minutes)
+    DateTime since = System.now().addMinutes(-30);
+
+    // Count distinct active users
+    List<AggregateResult> activeSessionsData = [
+        SELECT COUNT_DISTINCT(UserId__c) activeSessions
+        FROM UserActivity__c 
+        WHERE CreatedDate >= :since
+        AND SessionStatus__c = 'Active'
+    ];
+    
+    return !activeSessionsData.isEmpty() && activeSessionsData[0].get('activeSessions') != null
+        ? Integer.valueOf(String.valueOf(activeSessionsData[0].get('activeSessions')))
+        : 0;
+}
+
 
     private static Integer getMaxConcurrentUsers() {
         // Get maximum concurrent users recorded today

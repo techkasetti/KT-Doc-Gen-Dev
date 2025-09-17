@@ -34,7 +34,7 @@ public class DocumentLifecycleOrchestrator {
             
             System.debug('Document lifecycle orchestration completed successfully for: ' + documentId);
             
-        I'll continue from the catch block and complete the Document Lifecycle Orchestration Engine and the overall Document Lifecycle Management system.
+        //I'll continue from the catch block and complete the Document Lifecycle Orchestration Engine and the overall Document Lifecycle Management system.
         } catch (Exception e) {
             result.success = false;
             result.errorMessage = e.getMessage();
@@ -365,7 +365,7 @@ public class DocumentLifecycleOrchestrator {
         return EncodingUtil.convertToHex(Crypto.generateDigest('SHA-256', Blob.valueOf(hashInput)));
     }
     
-I'll continue from the createBlockchainAnchor method and complete the Document Lifecycle Management system.
+//I'll continue from the createBlockchainAnchor method and complete the Document Lifecycle Management system.
 private static String createBlockchainAnchor(Id documentId, OrchestrationResult result) {
     try {
         // Create blockchain anchor for immutable audit trail
@@ -775,7 +775,7 @@ public class DocumentLifecycleResult {
     @InvocableVariable
     public Integer failedPhases;
     
-I'll continue from the DocumentLifecycleResult class and complete the Document Lifecycle Management system with all remaining components.
+//I'll continue from the DocumentLifecycleResult class and complete the Document Lifecycle Management system with all remaining components.
     @InvocableVariable
     public Id auditTrailId;
     
@@ -812,3 +812,4 @@ public class DocumentLifecycleException extends Exception {}
 public class OrchestrationException extends Exception {}
 public class AIProcessingException extends Exception {}
 public class ReportingException extends Exception {}
+}
