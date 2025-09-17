@@ -1,0 +1,155 @@
+<template>
+    <lightning-card title="AI Model Management" icon-name="standard:einstein">
+        <div class="slds-p-horizontal_medium">
+            <!-- Models List -->
+            <div class="slds-grid slds-gutters slds-wrap">
+                <div class="slds-col slds-size_1-of-1">
+                    <div class="slds-clearfix slds-m-bottom_medium">
+                        <lightning-button
+                            label="Add New Model"
+                            variant="brand"
+                            icon-name="utility:add"
+                            onclick={handleNewModel}
+                            class="slds-float_right">
+                        </lightning-button>
+                    </div>
+
+                    <lightning-datatable
+                        data={aiModels}
+                        columns={modelColumns}
+                        key-field="modelId"
+                        hide-checkbox-column="true">
+                    </lightning-datatable>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
+
+    <!-- Model Editor Modal -->
+    <template if:true={showModelEditor}>
+        <section role="dialog" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+
+                <!-- Modal Header -->
+                     <header class="slds-modal__header">
+                     <h2 class="slds-text-heading_medium">
+                    <template if:true={selectedModel.modelId}>
+                        Edit AI Model Configuration
+                    </template>
+                    <template if:false={selectedModel.modelId}>
+                        New AI Model Configuration
+                    </template>
+                </h2>
+
+                    <button 
+                        class="slds-button slds-button_icon slds-modal__close"
+                        onclick={handleCloseModal}>
+                        <lightning-icon 
+                            icon-name="utility:close" 
+                            size="small">
+                        </lightning-icon>
+                    </button>
+                </header>
+
+                <!-- Modal Body -->
+                <div class="slds-modal__content slds-p-around_medium">
+                    <div class="slds-grid slds-gutters slds-wrap">
+                        
+                        <!-- Model Name -->
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input
+                                label="Model Name"
+                                value={selectedModel.modelName}
+                                data-field="modelName"
+                                onchange={handleFieldChange}
+                                required>
+                            </lightning-input>
+                        </div>
+
+                        <!-- Provider -->
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-combobox
+                                label="Provider"
+                                value={selectedModel.provider}
+                                options={providerOptions}
+                                data-field="provider"
+                                onchange={handleFieldChange}
+                                required>
+                            </lightning-combobox>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="slds-col slds-size_1-of-1">
+                            <lightning-textarea
+                                label="Description"
+                                value={selectedModel.description}
+                                data-field="description"
+                                onchange={handleFieldChange}>
+                            </lightning-textarea>
+                        </div>
+
+                        <!-- API Endpoint -->
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input
+                                label="API Endpoint"
+                                value={selectedModel.endpoint}
+                                data-field="endpoint"
+                                onchange={handleFieldChange}>
+                            </lightning-input>
+                        </div>
+
+                        <!-- Max Tokens -->
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input
+                                label="Max Tokens"
+                                type="number"
+                                value={selectedModel.maxTokens}
+                                data-field="maxTokens"
+                                onchange={handleFieldChange}>
+                            </lightning-input>
+                        </div>
+
+                        <!-- Capabilities -->
+                        <div class="slds-col slds-size_1-of-1">
+                            <lightning-input
+                                label="Capabilities"
+                                value={selectedModel.capabilities}
+                                data-field="capabilities"
+                                onchange={handleFieldChange}>
+                            </lightning-input>
+                        </div>
+
+                        <!-- Active Checkbox -->
+                        <div class="slds-col slds-size_1-of-1">
+                            <lightning-input
+                                type="checkbox"
+                                label="Active"
+                                checked={selectedModel.isActive}
+                                data-field="isActive"
+                                onchange={handleFieldChange}>
+                            </lightning-input>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCloseModal}>
+                    </lightning-button>
+                    <lightning-button
+                        label="Save"
+                        variant="brand"
+                        onclick={handleSaveModel}
+                        disabled={isLoading}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+
+        <!-- Modal Backdrop -->
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>
