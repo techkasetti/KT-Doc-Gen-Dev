@@ -66,6 +66,12 @@ public class DocumentAnalyticsEngine {
         @AuraEnabled public DateTime lastModifiedDate { get; set; }
         @AuraEnabled public Decimal estimatedProcessingTime { get; set; }
     }
+public static Map<String, Object> computeDocumentMetrics(Id documentId) {
+        Map<String,Object> out = new Map<String,Object>();
+        out.put('views', 0);
+        out.put('signatures', 0);
+        return out;
+    }
 
     @AuraEnabled(cacheable=true)
     public static DocumentAnalytics getDocumentAnalytics(Id documentId) {

@@ -5,6 +5,15 @@
  */
 public with sharing class DocumentSearchController {
     
+        
+    @AuraEnabled public static List<Id> searchDocuments(String q) {
+        List<Id> out = new List<Id>();
+        if (String.isBlank(q)) return out;
+        if (!Schema.getGlobalDescribe().containsKey('Document__c')) return out;
+        List<Document__c> rows = [SELECT Id FROM Document__c LIMIT 10];
+        for (Document__c d : rows) out.add(d.Id);
+        return out;
+    }
     @AuraEnabled(cacheable=true)
     public static List<DocumentSearchResult> searchDocuments(Map<String, Object> searchParams) {
         try {

@@ -22,6 +22,14 @@ public class DocumentVersioningService {
         @AuraEnabled public String errorMessage;
     }
 
+    public static Id createVersion(Id documentId, String snapshotJson) {
+        if (documentId == null || String.isBlank(snapshotJson)) return null;
+        if (!Schema.getGlobalDescribe().containsKey('Document_Version__c')) return null;
+        Document_Version__c v = new Document_Version__c(Document__c = documentId, Snapshot__c = snapshotJson, CreatedAt__c = Datetime.now());
+        insert v;
+        return v.Id;
+    }
+
     @AuraEnabled(cacheable=false)
     public static DocumentVersion createDocumentVersion(String documentId, String content, String changeDescription) {
         DocumentVersion newVersion = new DocumentVersion();

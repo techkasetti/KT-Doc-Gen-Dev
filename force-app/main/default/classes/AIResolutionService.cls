@@ -1,7 +1,11 @@
-public class AIResolutionService {
-    public static String generateResolutionSuggestion(String conflictData) {
-        // This would integrate with your AI service (Anara, OpenAI, etc.)
-        // For now, returning a mock response
-        return 'AI suggests merging both changes by placing the first change before the second, with a comma separation for readability.';
+public with sharing class AIResolutionService {
+    @AuraEnabled
+    public static Map<String,Object> resolveAmbiguity(String contextId, Map<String,Object> data) {
+        Map<String,Object> out = new Map<String,Object>{ 'contextId' => contextId, 'resolution' => 'deferred' };
+        if (String.isBlank(contextId)) return out;
+        // TODO: call LLM or heuristic router; return resolution and confidence
+        out.put('resolution','apply_default');
+        out.put('confidence', 0.75);
+        return out;
     }
 }

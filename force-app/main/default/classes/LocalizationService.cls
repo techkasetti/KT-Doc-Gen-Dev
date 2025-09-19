@@ -1,49 +1,11 @@
 public with sharing class LocalizationService {
-    @AuraEnabled
-    public static Map<String, Object> translateDocumentContent(String documentId, String targetLanguage) {
-        return new Map<String, Object>{ 'translatedText' => 'Sample Translation' };
-    }
-
-    @AuraEnabled
-    public static Map<String, Object> formatDateTimeByLocale(DateTime dateValue, String locale) {
-        return new Map<String, Object>{ 'formatted' => dateValue.format() };
-    }
-
-    @AuraEnabled
-    public static Map<String, Object> convertCurrencyByRegion(Decimal amount, String sourceCurrency, String targetCurrency) {
-        return new Map<String, Object>{ 'convertedAmount' => amount };
-    }
-
-    @AuraEnabled
-    public static String formatAddressByCountry(Map<String, Object> addressData, String countryCode) {
-        return 'Formatted Address';
-    }
-
-    @AuraEnabled
-    public static Map<String, Object> getLocalizedValidationRules(String country, String documentType) {
-        return new Map<String, Object>();
-    }
-
-    @AuraEnabled
-    public static List<Map<String, Object>> getSupportedLocales() {
-        return new List<Map<String, Object>>();
-    }
-
-    // Private methods
-    private static Map<String, Object> loadLocaleConfiguration(String locale) {
-        return new Map<String, Object>();
-    }
-
-    private static String applyRegionalFormatting(String content, String locale) {
-        return content;
-    }
-
-    private static Map<String, Object> translateUIElements(Map<String, Object> uiData, String language) {
-        return uiData;
-    }
-
-    private static Boolean validateLocalizedContent(String content, String locale) {
-        return true;
+    @AuraEnabled(cacheable=true)
+    public static Map<String,String> getStrings(String locale) {
+        Map<String,String> out = new Map<String,String>();
+        if (String.isBlank(locale)) locale = 'en';
+        // Minimal defaults; production loads from Custom Metadata or Translation Workbench
+        out.put('locale', locale);
+        out.put('hello', locale == 'es' ? 'Hola' : 'Hello');
+        return out;
     }
 }
-
