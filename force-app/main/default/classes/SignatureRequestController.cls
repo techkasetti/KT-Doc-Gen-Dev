@@ -1,22 +1,20 @@
 public with sharing class SignatureRequestController {
-    // Creates a signature request by calling a Named Credential 'DOCSIGN_NC'
-    @AuraEnabled
-    public static Id createSignatureRequest(String documentId, String recipientEmail) {
-        // Build request
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint('callout:DOCSIGN_NC/v1/envelopes');
-        req.setMethod('POST');
-        req.setHeader('Content-Type','application/json');
-        req.setBody(JSON.serialize(new Map<String,Object>{
-            'documentId' => documentId,
-            'recipient' => recipientEmail
-        }));
-        Http http = new Http();
-        HTTPResponse resp = http.send(req);
-        // Record integration call
-        Integration_Call__c ic = new Integration_Call__c(Endpoint__c = 'DOCSIGN_CREATE', StatusCode__c = Integer.valueOf(resp.getStatusCode()), Response__c = resp.getBody());
-        insert ic;
-        // Return a synthetic id (in production map to Envelope id)
-        return ic.Id;
-    }
+  @AuraEnabled
+  public static Id createSignatureRequest(Id documentId, String signerEmail, String signerName) {
+    SignatureData__c req = new SignatureData__c(Document__c = documentId, Signer_Name__c = signerName, Signature_Method__c = 'Pending');
+    insert req;
+    return req.Id;
+  }
+
+  // Callout-based send to provider (DocuSign) - implement NamedCredential usage
+  public static void sendToProvider(Id signatureId) {
+    // TODO: implement callout using Named Credential: callout:DocuSign_API
+    // Use HttpRequest with named credential, handle OAuth refresh via DocuSignAuth
+  }
+
+  @AuraEnabled
+  public static Boolean verifyHash(Id signatureId, String providedHash) {
+    SignatureData__c sd = [SELECT Id, Signature_Hash__c FROM SignatureData__c WHERE Id = :signatureId LIMIT 1];
+    return sd.Signature_Hash__c == providedHash;
+  }
 }
